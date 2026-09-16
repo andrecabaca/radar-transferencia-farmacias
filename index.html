@@ -186,9 +186,6 @@
     border-left:2px solid var(--line2);padding-left:10px}
   #base:empty{display:none}
   #base.err{color:#fca5a5;border-left-color:var(--bad)}
-  #porMorada{border-top:none;padding-top:0;margin-top:10px}
-  #porMorada summary{font-size:11.5px}
-  #porMorada .body{padding-top:4px}
   #cZona{margin-bottom:0}
   #concInfo{font-size:12.5px;color:var(--txt);line-height:1.55;margin-top:11px;
     border-left:2px solid var(--acc);padding-left:10px}
@@ -436,13 +433,6 @@
       <div id="base">A carregar as farmácias do país...</div>
       <div id="concInfo"></div>
       <div id="semPos"></div>
-      <details id="porMorada">
-        <summary>Ir a uma morada certa</summary>
-        <div class="body">
-          <input type="text" id="q" placeholder="Rua, número, localidade" autocomplete="off">
-          <button id="btnSearch">Procurar</button>
-        </div>
-      </details>
       <div id="status"></div>
     </section>
 
@@ -1281,10 +1271,6 @@ function setStatus(t, err, accao){
   }
 }
 
-// Acima desta area o limite administrativo devolvido pela pesquisa e' grande demais
-// para servir de enquadramento: o mapa passa a centrar-se na localidade.
-const AREA_MAX = 45;
-
 // Os limites de concelho e freguesia continuam a vir do Overpass, a pedido. Sao a
 // unica coisa que ainda se vai buscar la' fora, e so' quando se carrega no botao.
 const OVERPASS = ['https://overpass-api.de/api/interpreter',
@@ -1326,29 +1312,6 @@ out geom;`;
     }
     setStatus(names.length ? names.join('  |  ') : 'Não foram encontrados limites administrativos neste ponto.');
   }catch(e){ setStatus('Falha ao obter limites: '+e.message, true); }
-}
-
-async function geocode(){
-  const q = document.getElementById('q').value.trim();
-  if(!q) return;
-  setStatus('A procurar...');
-  try{
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pt&q='+encodeURIComponent(q));
-    const j = await r.json();
-    if(!j.length){ setStatus('Não encontrado.', true); return; }
-    const g = j[0], bb = g.boundingbox.map(Number);   // [sul, norte, oeste, este]
-    const wKm = dist(bb[0],bb[2],bb[0],bb[3])/1000, hKm = dist(bb[0],bb[2],bb[1],bb[2])/1000;
-    // Procurar "Beja" devolve o limite do concelho (2458 km²). Enquadrar isso punha o
-    // mapa a zoom 8 e o carregamento recusava por área, o que parecia que a app estava
-    // avariada. O lat/lon do resultado é o centro da localidade — é esse que interessa.
-    if(wKm*hKm > AREA_MAX){
-      map.setView([Number(g.lat), Number(g.lon)], 14);
-      setStatus(g.display_name+' — o limite administrativo tem '+Math.round(wKm*hKm)+' km², grande demais para analisar de uma vez. O mapa ficou centrado na localidade; arraste até à zona que lhe interessa e carregue os dados.');
-    } else {
-      map.fitBounds([[bb[0],bb[2]],[bb[1],bb[3]]]);
-      setStatus(g.display_name);
-    }
-  }catch(e){ setStatus('Falha na pesquisa: '+e.message, true); }
 }
 
 /* ---------------- painel de teste ---------------- */
@@ -1708,8 +1671,6 @@ map.on('click', ev=>{
 });
 
 document.getElementById('cZona').onchange = e=>irParaConcelho(e.target.value);
-document.getElementById('btnSearch').onclick = geocode;
-document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter') geocode(); });
 document.getElementById('btnBounds').onclick = loadBounds;
 document.getElementById('btnOrigin').onclick = ()=>setMode('origin');
 document.getElementById('btnTest').onclick   = ()=>setMode('test');
