@@ -12,7 +12,15 @@ São duas vistas do mesmo problema:
 - **`index.html`** — a análise ao metro de uma zona concreta. Serve para escolher
   a porta.
 
-## Como abrir
+## Onde está
+
+**https://andrecabaca.github.io/radar-transferencia-farmacias/** — funciona em
+qualquer computador ou telemóvel, sem instalar nada.
+
+A origem, os candidatos guardados e as correções manuais ficam no navegador de
+quem abre a página, não no servidor. Abrir noutro computador começa do zero.
+
+## Como abrir localmente
 
 Duplo clique em `Abrir Radar.bat`. Abre o navegador em `http://localhost:8777`.
 Feche a janela preta quando terminar.
@@ -61,6 +69,42 @@ vezes, uma como ponto e outra como edifício. Sem isso a saturação vinha infla
 
 Para atualizar os dados, correr `python dados/processa.py` depois de voltar a
 descarregar os ficheiros do Overpass e do INE indicados no cabeçalho do script.
+
+## Transferências já aprovadas pelo Infarmed
+
+Era o maior ponto cego da ferramenta: um local pode estar livre de farmácias e já
+estar entregue a outra por decisão do Infarmed, nos termos do artigo 25.º da
+Portaria. O Infarmed publica essas decisões num PDF, *Transferências ao abrigo da
+Portaria n.º 352/2012*, atualizado sempre que aprova uma.
+
+O `dados/transferencias.py` lê esse PDF, separa as aprovações das revogações,
+fica com o estado mais recente de cada farmácia e situa o destino pela morada.
+Das 415 aprovações em vigor, 142 ficaram com posição utilizável.
+
+O mapa distingue duas coisas, e a diferença é importante:
+
+- **Locais tomados** (magenta cheio, com círculo de 500 m): aprovadas nos últimos
+  três anos e ainda sem farmácia correspondente no registo. Contam como farmácia
+  para o teste das distâncias, porque na prática o sítio está entregue.
+- **Histórico** (roxo tracejado, sem círculo): as já executadas e as aprovadas há
+  mais de três anos. Não bloqueiam nada. Uma aprovação antiga cujo destino não se
+  encontra no registo é quase sempre falha de correspondência de nomes, não um
+  local por ocupar há uma década — bloquear por causa dela seria inventar uma
+  proibição. Ficam à vista porque dizem para onde a concorrência se mexeu.
+
+Para atualizar: descarregar o PDF por cima de `dados/transferencias-infarmed.pdf`
+e correr `python dados/transferencias.py`.
+
+## Quem é o dono
+
+Cada farmácia traz o proprietário e o número de farmácias que essa entidade tem
+no país, do próprio registo do Infarmed. Passe o rato por cima de uma farmácia
+para ver. O resumo da área diz quantos proprietários distintos existem ali e
+quantos têm uma só farmácia.
+
+O limite legal de propriedade são quatro farmácias por entidade. Quem já lá está
+não pode comprar mais nenhuma — no país inteiro são 22 entidades no limite, contra
+2323 proprietários de uma única farmácia.
 
 ## De onde vêm as farmácias
 
