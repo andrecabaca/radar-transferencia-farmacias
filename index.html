@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar de Transferência de Farmácias</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  /* Paleta. O mapa e' o conteudo; o painel emoldura-o sem lhe roubar atencao. */
+  :root{
+    --bg:#0a1120; --panel:#101b2d; --panel2:#16233a; --panel3:#1d2c45;
+    --line:#22334c; --line2:#2d4260;
+    --txt:#e8eef7; --dim:#a3b4ca; --dim2:#7d90a8;
+    --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#38bdf8; --acc-d:#0284c7;
+    --sidebar:392px; --r:10px;
+    --sh:0 1px 2px rgba(0,0,0,.35), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+    font:13px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  #app{display:flex;height:100%}
+  #side{width:var(--sidebar);min-width:var(--sidebar);height:100%;overflow-y:auto;
+    background:var(--bg);border-right:1px solid var(--line);scrollbar-width:thin;
+    scrollbar-color:var(--line2) transparent}
+  #side::-webkit-scrollbar{width:9px}
+  #side::-webkit-scrollbar-thumb{background:var(--line2);border-radius:9px;
+    border:3px solid var(--bg)}
+  #map{flex:1;height:100%;background:#0e1829}
+  #app.fechado{--sidebar:0px}
+  #app.fechado #side{display:none}
+
+  /* ---- cabecalho ---- */
+  .hd{padding:16px 18px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;
+    background:linear-gradient(180deg,#132139,var(--bg));z-index:500}
+  h1{font-size:16px;margin:0;letter-spacing:-.2px;font-weight:650}
+  .hd .sub{margin:5px 0 0;font-size:12px;color:var(--dim);line-height:1.45}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 9px;
+    border-radius:99px;border:1px solid var(--line2);background:var(--panel);color:var(--dim);
+    text-decoration:none}
+  a.chip:hover{border-color:var(--acc);color:var(--acc)}
+  .chip b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+
+  /* ---- cartoes ---- */
+  .wrap{padding:14px 14px 40px;display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:14px;box-shadow:var(--sh)}
+  .card > h2{display:flex;align-items:center;gap:9px;font-size:12.5px;margin:0 0 12px;
+    font-weight:650;color:var(--txt);letter-spacing:-.1px}
+  .card > h2 .n{width:20px;height:20px;border-radius:6px;flex:none;display:grid;
+    place-items:center;background:var(--panel3);color:var(--acc);font-size:11px;
+    font-weight:700;font-variant-numeric:tabular-nums}
+  .card.ref{background:transparent;box-shadow:none;border-style:dashed}
+
+  /* ---- controlos ---- */
+  label{display:block;font-size:12px;color:var(--dim);margin:10px 0 5px}
+  input[type=text],input[type=number],select{width:100%;padding:9px 11px;background:var(--panel2);
+    border:1px solid var(--line2);border-radius:8px;color:var(--txt);font-size:13px;
+    font-family:inherit}
+  input::placeholder{color:var(--dim2)}
+  input[type=text]:focus,input[type=number]:focus{outline:none;border-color:var(--acc);
+    box-shadow:0 0 0 3px rgba(56,189,248,.14)}
+  button{width:100%;padding:9px 12px;background:var(--panel2);border:1px solid var(--line2);
+    border-radius:8px;color:var(--txt);font-size:12.5px;cursor:pointer;font-family:inherit;
+    margin-top:8px;text-align:left;transition:background .12s,border-color .12s}
+  button:hover{background:var(--panel3);border-color:#3a5578}
+  button.primary{background:linear-gradient(180deg,#0ea5e9,var(--acc-d));border-color:#0ea5e9;
+    color:#f0f9ff;font-weight:600;text-align:center}
+  button.primary:hover{background:linear-gradient(180deg,#38bdf8,#0ea5e9)}
+  button.on{background:rgba(52,211,153,.14);border-color:var(--ok);color:#a7f3d0}
+  button:disabled{opacity:.38;cursor:not-allowed}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1}
+  .row button{margin-top:8px;text-align:center}
+  .chk{display:flex;align-items:flex-start;gap:9px;margin:10px 0;font-size:12.5px;
+    color:var(--txt);cursor:pointer;line-height:1.45}
+  .chk input{margin:2px 0 0;accent-color:var(--acc);flex:none;width:15px;height:15px}
+  .chk span small{display:block;color:var(--dim);font-size:11.5px;margin-top:3px;line-height:1.45}
+  .rng{display:flex;align-items:center;gap:12px}
+  .rng input[type=range]{flex:1;accent-color:var(--acc)}
+  .rng b{font-size:13px;min-width:54px;text-align:right;color:var(--acc);
+    font-variant-numeric:tabular-nums}
+  .note{font-size:11.5px;color:var(--dim);line-height:1.6;margin:9px 0 0}
+  .note strong{color:var(--txt);font-weight:600}
+
+  /* ---- veredicto ---- */
+  .verdict{padding:13px 14px;border-radius:9px;margin:10px 0;font-size:13.5px;
+    font-weight:650;border:1px solid;line-height:1.4}
+  .v-ok{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.5);color:#6ee7b7}
+  .v-warn{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.5);color:#fcd34d}
+  .v-bad{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5);color:#fca5a5}
+  .v-idle{background:var(--panel2);border-color:var(--line2);color:var(--dim);font-weight:400}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:12px;padding:9px 0;
+    border-bottom:1px solid var(--line);line-height:1.5}
+  .check:last-child{border-bottom:none}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:5px}
+  .d-ok{background:var(--ok);box-shadow:0 0 0 3px rgba(52,211,153,.16)}
+  .d-warn{background:var(--warn);box-shadow:0 0 0 3px rgba(251,191,36,.16)}
+  .d-bad{background:var(--bad);box-shadow:0 0 0 3px rgba(248,113,113,.16)}
+  .d-na{background:#46587a}
+  .check b{display:block;font-weight:650;color:var(--txt)}
+  .check em{font-style:normal;color:var(--dim);font-size:11.5px;display:block;margin-top:3px}
+  .kpi{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;
+    padding:6px 0;color:var(--dim)}
+  .kpi b{color:var(--txt);font-variant-numeric:tabular-nums;font-size:13px}
+  .scorebar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:6px 0 12px}
+  .scorebar i{display:block;height:100%;background:linear-gradient(90deg,#0ea5e9,#34d399);
+    border-radius:99px}
+
+  /* ---- legenda ---- */
+  .legend{font-size:11.5px;color:var(--dim);line-height:1.85;margin-top:10px;
+    border-top:1px solid var(--line);padding-top:10px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:8px;
+    vertical-align:-1px}
+
+  /* ---- candidatos ---- */
+  .cand{background:var(--panel2);border:1px solid var(--line2);border-radius:9px;
+    padding:11px;margin-bottom:8px;font-size:12px}
+  .cand .t{display:flex;justify-content:space-between;gap:8px}
+  .cand b{font-size:13px}
+  .cand em{font-style:normal;color:var(--dim);font-size:11.5px;display:block;margin-top:4px;
+    line-height:1.5}
+  .cand .acts{display:flex;gap:6px;margin-top:9px}
+  .cand .acts button{margin:0;padding:5px 8px;font-size:11px;text-align:center;flex:1}
+  .pill{font-size:10px;padding:3px 8px;border-radius:99px;font-weight:700;flex:none;
+    height:fit-content;letter-spacing:.2px}
+  .p-ok{background:rgba(52,211,153,.18);color:#6ee7b7}
+  .p-warn{background:rgba(251,191,36,.18);color:#fcd34d}
+  .p-bad{background:rgba(248,113,113,.18);color:#fca5a5}
+
+  /* ---- blocos recolhiveis ---- */
+  details{margin-top:9px;border-top:1px solid var(--line);padding-top:9px}
+  .card.ref details:first-of-type{border-top:none;padding-top:0;margin-top:0}
+  summary{cursor:pointer;font-size:12.5px;color:var(--acc);padding:3px 0;user-select:none;
+    font-weight:550}
+  summary:hover{color:#7dd3fc}
+  details .body{font-size:11.5px;color:var(--dim);line-height:1.7;padding:8px 0 2px}
+  details .body p{margin:0 0 10px}
+  details .body strong{color:var(--txt);font-weight:600}
+
+  /* ---- estado e fonte de dados ---- */
+  #status{font-size:11.5px;color:var(--dim);margin-top:10px;min-height:16px;line-height:1.55}
+  #status.err{color:#fca5a5}
+  #base{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:11px;
+    border-left:2px solid var(--line2);padding-left:10px}
+  #base.err{color:#fca5a5;border-left-color:var(--bad)}
+  #semPos{margin-top:8px}
+  #semPos details{border-top:none;padding-top:0;margin-top:0}
+  #semPos summary{font-size:11.5px;color:#fcd34d;font-weight:600}
+  #semPos ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--dim);line-height:1.6}
+  .statusAct{display:block;margin-top:8px;padding:6px 10px;font-size:11.5px;cursor:pointer;
+    background:var(--acc-d);color:#fff;border:1px solid #0ea5e9;border-radius:7px;width:auto;
+    text-align:center}
+
+  /* ---- modos ---- */
+  .modes{display:flex;flex-direction:column;gap:8px}
+  .modes label{display:flex;gap:10px;align-items:flex-start;margin:0;padding:11px 12px;
+    border:1px solid var(--line2);border-radius:9px;cursor:pointer;background:var(--panel2);
+    transition:border-color .12s,background .12s}
+  .modes label:hover{border-color:#3a5578}
+  .modes label:has(input:checked){border-color:var(--acc);background:rgba(56,189,248,.10);
+    box-shadow:0 0 0 1px rgba(56,189,248,.25)}
+  .modes input{margin:2px 0 0;accent-color:var(--acc);flex:none;width:15px;height:15px}
+  .modes span b{display:block;font-size:12.5px;color:var(--txt);font-weight:650}
+  .modes span small{display:block;font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.5}
+
+  /* ---- resumo da area ---- */
+  #resumo{margin-top:12px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:9px;padding:12px}
+  #resumo .big{font-size:12.5px;line-height:1.5;margin:0 0 10px;color:var(--dim)}
+  #resumo .big b{font-size:26px;color:#fca5a5;font-variant-numeric:tabular-nums;
+    display:block;line-height:1.05;margin-bottom:3px;font-weight:700}
+  #resumo .note{margin-top:0}
+  ul.motivos{list-style:none;margin:0 0 10px;padding:0}
+  ul.motivos li{font-size:12px;color:var(--dim);line-height:1.5;padding:5px 0;display:flex;
+    gap:9px;align-items:flex-start}
+  ul.motivos li i{width:11px;height:11px;border-radius:3px;flex:none;margin-top:4px}
+  ul.motivos li b{color:var(--txt);font-variant-numeric:tabular-nums}
+
+  /* ---- mapa ---- */
+  .leaflet-container{background:#0e1829}
+  .leaflet-control-zoom a{background:var(--panel)!important;color:var(--txt)!important;
+    border-color:var(--line2)!important}
+  .leaflet-control-zoom a:hover{background:var(--panel3)!important}
+  .lgt{background:rgba(10,17,32,.95);color:var(--txt);border:1px solid var(--line2);
+    border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:600;line-height:1.5;
+    box-shadow:var(--sh)}
+  .lgt:before{display:none}
+  .mkr-lbl{font-size:10px;color:#e8eef7;text-shadow:0 0 3px #0a1120,0 0 3px #0a1120;
+    white-space:nowrap;font-weight:600}
+  .crosshair{cursor:crosshair!important}
+
+  /* ---- barra de leitura sobre o mapa ---- */
+  #hoverbar{position:fixed;left:calc(var(--sidebar) + 16px);bottom:16px;z-index:900;
+    display:flex;align-items:center;gap:11px;max-width:calc(100vw - var(--sidebar) - 44px);
+    background:rgba(10,17,32,.95);border:1px solid var(--line2);border-radius:10px;
+    padding:11px 15px;font-size:13px;color:var(--txt);box-shadow:var(--sh)}
+  #hoverbar .hb-dot{width:11px;height:11px;border-radius:50%;background:#46587a;flex:none;
+    box-shadow:0 0 0 3px rgba(70,88,122,.25)}
+  #hoverbar b{font-weight:700}
+
+  /* ---- recolher o painel ---- */
+  #btnSide{position:fixed;top:14px;right:14px;z-index:900;width:auto;
+    margin:0;padding:7px 11px;font-size:11.5px;background:rgba(10,17,32,.95);
+    border:1px solid var(--line2);border-radius:8px;box-shadow:var(--sh);color:var(--dim)}
+  #btnSide:hover{color:var(--txt)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <div class="hd">
+      <h1>Radar de Transferência de Farmácias</h1>
+      <p class="sub">Onde a lei deixa transferir uma farmácia, e onde dentro disso compensa.</p>
+      <div class="chips">
+        <span class="chip" id="chipFonte">Registo do Infarmed</span>
+        <a class="chip" href="explicador-regras.html">As regras explicadas</a>
+        <a class="chip" href="nacional.html">Mapa nacional &rarr;</a>
+      </div>
+    </div>
+
+    <div class="wrap">
+
+    <section class="card">
+      <h2><span class="n">1</span>Localizar a zona</h2>
+      <input type="text" id="q" placeholder="Concelho, freguesia ou morada" autocomplete="off">
+      <button id="btnSearch">Procurar</button>
+      <div id="base">A carregar as farmácias do país...</div>
+      <div id="semPos"></div>
+      <div id="status"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">2</span>Farmácia a transferir</h2>
+      <button id="btnOrigin">Marcar no mapa a localização atual</button>
+      <div id="originInfo" class="note">Sem origem definida. A origem serve para testar o requisito de elegibilidade do artigo 26.º n.º 2 a) e o raio de 750 m.</div>
+      <label class="chk"><input type="checkbox" id="chkExcecional"><span>Esteve em regime excecional de funcionamento nos últimos 3 anos<small>Artigo 57.º-A. Dispensa o requisito da alínea a) do n.º 2.</small></span></label>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">3</span>O que o mapa mostra</h2>
+      <div class="modes">
+        <label><input type="radio" name="mm" value="bloqueio" checked><span><b>Onde não posso</b><small>Tapa a vermelho tudo o que a lei fecha. O que fica destapado é onde pode ir.</small></span></label>
+        <label><input type="radio" name="mm" value="atratividade"><span><b>Onde compensa</b><small>Apaga o que está fechado e acende a verde os locais consoante o movimento à volta.</small></span></label>
+      </div>
+      <div id="resumo"><p class="note">Aproxime até à zona que quer estudar para ver o resumo.</p></div>
+      <div class="legend" id="legenda"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">4</span>Testar um local</h2>
+      <button id="btnTest" class="primary">Escolher ponto no mapa</button>
+      <div id="verdict" class="verdict v-idle">Marque um ponto para avaliar.</div>
+      <div id="checks"></div>
+      <div id="score"></div>
+      <button id="btnSave" disabled>Guardar como candidato</button>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">5</span>Candidatos</h2>
+      <div id="cands"><p class="note">Nenhum candidato guardado.</p></div>
+      <button id="btnReport" disabled>Descarregar relatório comparativo</button>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">6</span>Afinar</h2>
+      <label class="chk"><input type="checkbox" id="chkFreg"><span>Freguesia de destino com menos de 4000 habitantes<small>Dispensa a distância mínima de 100 m a unidades de saúde.</small></span></label>
+      <label>Margem de segurança na medição</label>
+      <div class="rng"><input type="range" id="rngMargin" min="0" max="100" step="5" value="30"><b id="lblMargin">30 m</b></div>
+      <p class="note">A lei mede entre os dois pontos <strong>mais próximos dos limites exteriores</strong> dos edifícios, não entre as entradas nem entre centroides. Os pontos aqui usados são entradas, centroides ou moradas geocodificadas, por isso a distância calculada é <strong>maior</strong> que a legal. A margem corrige esse enviesamento a seu favor.</p>
+
+      <details>
+        <summary>Camadas do mapa</summary>
+        <div class="body">
+          <label class="chk"><input type="checkbox" id="lyGrid" checked><span>Mapa de cores</span></label>
+          <label class="chk"><input type="checkbox" id="lyExcl" checked><span>Círculos de 500 m e 100 m</span></label>
+          <label class="chk"><input type="checkbox" id="lyPois" checked><span>Comércio e serviços</span></label>
+          <label class="chk"><input type="checkbox" id="lyTransf" checked><span>Transferências aprovadas (histórico)<small>Onde o Infarmed já autorizou farmácias a mudarem-se. Mostra para onde a concorrência se mexeu.</small></span></label>
+          <label class="chk"><input type="checkbox" id="chkTransf" checked><span>Tapar os locais com transferência recente<small>Aprovadas nos últimos 3 anos e ainda sem farmácia no registo: o local está entregue a outra farmácia. As mais antigas não tapam nada, porque quase sempre já foram executadas.</small></span></label>
+          <button id="btnBounds">Desenhar limites de concelho e freguesia</button>
+        </div>
+      </details>
+
+      <details>
+        <summary>Comércio e correções manuais</summary>
+        <div class="body">
+          <button id="btnLoad" class="primary">Carregar comércio e serviços desta área</button>
+          <p class="note">O comércio à volta é o que alimenta o índice de atratividade. É a única coisa que ainda se carrega zona a zona: são milhões de pontos e não cabem num ficheiro do país.</p>
+          <div class="row">
+            <button id="btnAddPh">+ Farmácia</button>
+            <button id="btnAddHu">+ Unidade de saúde</button>
+          </div>
+          <p class="note">Acrescente à mão o que faltar. Clique num marcador de farmácia para o remover, ou num de saúde para alternar se conta para a regra dos 100 m.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="card ref">
+      <h2>Base legal e limitações</h2>
+      <details>
+        <summary>Transferência dentro do mesmo município</summary>
+        <div class="body">
+          <p><strong>Elegibilidade da origem</strong> — tem de existir uma farmácia ou posto farmacêutico móvel a menos de 1000 m da localização atual (art. 26.º n.º 2 a) do DL 307/2007). Dispensado se a farmácia esteve em regime excecional nos últimos 3 anos, <em>ou</em> se o destino ficar dentro de um raio de 750 m da localização atual (n.º 4).</p>
+          <p><strong>500 m entre farmácias</strong> no local de destino (art. 26.º n.º 2 b); art. 2.º n.º 1 b) da Portaria). Em linha reta, entre os dois pontos mais próximos dos limites exteriores, não das entradas. Aplica-se também a farmácias de município limítrofe (art. 2.º n.º 3).</p>
+          <p><strong>100 m a extensão de saúde, centro de saúde ou estabelecimento hospitalar</strong> (art. 2.º n.º 1 c) da Portaria, aplicável à transferência pelo n.º 2). Salvo em freguesias com menos de 4000 habitantes.</p>
+          <p><strong>Parecer favorável da câmara municipal</strong> (art. 26.º n.º 2 c). Não pode ser condicionado à abertura de outra farmácia na origem (n.º 6).</p>
+          <p><strong>Exceção do n.º 7</strong> — se a farmácia já está a menos de 500 m de outra, a distância mínima não se aplica desde que da transferência não resulte maior proximidade às farmácias existentes no destino.</p>
+          <p><strong>Capitação de 3500 habitantes: não se aplica.</strong> O art. 2.º n.º 2 da Portaria só remete para as alíneas b) e c). A capitação é requisito de abertura de novas farmácias, não de transferência.</p>
+          <p><strong>Carência de 5 anos</strong> desde a abertura antes de poder pedir transferência (art. 27.º da Portaria).</p>
+          <p>Regras em vigor: DL 307/2007 (red. DL 58/2024) e Portaria 352/2012 (red. Portaria 375/2025/1, desde 05-11-2025). Os 350 m da Portaria 1430/2007 já não valem.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Transferência para concelho limítrofe</summary>
+        <div class="body">
+          <p>Artigo 26.º-A do DL 307/2007. Cumulativamente: o município de origem tem capitação inferior à exigível; existem farmácias a menos de 500 m da farmácia a transferir; a capitação na origem não passa a ser superior à exigível após a saída; e há 500 m mínimos entre farmácias no destino. O concelho de destino tem de ter capitação superior.</p>
+        </div>
+      </details>
+      <details>
+        <summary>De onde vêm os dados</summary>
+        <div class="body">
+          <p>A lista de farmácias é a do <strong>registo do Infarmed</strong>, que é a lista certa. O registo não tem coordenadas, só moradas: onde a farmácia casa pelo nome com um ponto do OpenStreetMap, fica com a coordenada precisa desse ponto; as restantes são situadas pela morada, aparecem <strong>a tracejado</strong> e podem estar dezenas de metros ao lado.</p>
+          <p>As <strong>unidades de saúde</strong> e o <strong>comércio</strong> vêm do OpenStreetMap, que é colaborativo e está incompleto fora dos centros urbanos. Confirme a lista antes de decidir e acrescente à mão o que faltar.</p>
+          <p>A classificação de uma unidade como centro de saúde, extensão de saúde ou estabelecimento hospitalar é feita por heurística sobre o nome e as etiquetas. Uma clínica ou consultório privado não é nenhuma dessas coisas e não deve contar para os 100 m. Verifique caso a caso.</p>
+        </div>
+      </details>
+      <details>
+        <summary>O que isto não faz</summary>
+        <div class="body">
+          <p>Não conhece os <strong>pedidos de transferência de terceiros já em curso</strong>, que bloqueiam locais nos termos do art. 25.º da Portaria. Só o Infarmed publica essa informação.</p>
+          <p>As distâncias são calculadas ponto a ponto, não entre limites exteriores de edifícios. A prova legal é a <strong>certidão camarária</strong> exigida pelo art. 20.º n.º 1 d) da Portaria.</p>
+          <p>Não conta a população da freguesia, não verifica as condições de funcionamento, e não trata a capitação para concelhos limítrofes.</p>
+          <p>Use isto para pré-selecionar locais e descartar os impossíveis. Não substitui a certidão camarária nem a decisão de aptidão do Infarmed.</p>
+        </div>
+      </details>
+    </section>
+
+    </div>
+  </div>
+  <div id="map"></div>
+  <button id="btnSide" type="button">Esconder painel</button>
+  <div id="hoverbar"><span class="hb-dot"></span><span class="hb-txt">Passe o rato sobre o mapa para saber se pode transferir para ali.</span></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+
+/* ---------------- estado ---------------- */
+const S = {
+  pharms: [],      // {id,lat,lng,name,manual}
+  health: [],      // {id,lat,lng,name,legal,manual}
+  pois: [],        // {lat,lng,w,name}
+  origin: null,    // {lat,lng}
+  test: null,      // {lat,lng}
+  cands: [],
+  margin: 30,
+  freg: false,
+  excecional: false,
+  mode: null,             // 'origin'|'test'|'addPh'|'addHu'
+  mapMode: 'bloqueio'     // 'bloqueio'|'atratividade'
+};
+const D_PH = 500, D_HU = 100, D_ELEG = 1000, D_RAIO = 750;
+const ZOOM_MIN = 12;
+
+/* ---------------- mapa ---------------- */
+const map = L.map('map', {preferCanvas:true}).setView([38.7223,-9.1393], 15);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19, attribution:'&copy; OpenStreetMap'
+}).addTo(map);
+
+const gExcl   = L.layerGroup().addTo(map);
+const gPh     = L.layerGroup().addTo(map);
+const gHu     = L.layerGroup().addTo(map);
+const gPoi    = L.layerGroup().addTo(map);
+const gOrigin = L.layerGroup().addTo(map);
+const gTest   = L.layerGroup().addTo(map);
+const gBound  = L.layerGroup().addTo(map);
+const gTr     = L.layerGroup().addTo(map);
+const gCand   = L.layerGroup().addTo(map);
+
+/* ---------------- geometria ---------------- */
+const RAD = Math.PI/180, RE = 6371008.8;
+function dist(aLat,aLng,bLat,bLng){
+  const dLat=(bLat-aLat)*RAD, dLng=(bLng-aLng)*RAD;
+  const m=Math.cos((aLat+bLat)/2*RAD);
+  return Math.hypot(dLat, dLng*m)*RE;
+}
+function nearest(lat,lng,arr){
+  let best=Infinity, item=null;
+  for(const p of arr){ const d=dist(lat,lng,p.lat,p.lng); if(d<best){best=d;item=p;} }
+  return {d:best, item};
+}
+
+/* Índice espacial das farmácias e unidades de saúde.
+   Com o país inteiro carregado são milhares de pontos, e a camada de elegibilidade
+   faz uma procura do mais próximo por cada célula de 5 px de cada mosaico. Em busca
+   linear isso eram milhões de distâncias por mosaico e o mapa não desenhava. */
+const NN_CELL = 0.01;                 // ~1,1 km em latitude, ~0,85 km em longitude
+const NN_LADO = NN_CELL * 85000;      // lado mínimo da célula em metros, por defeito
+function buildNN(arr){
+  const m = new Map();
+  for(const p of arr){
+    const k = Math.floor(p.lat/NN_CELL)+':'+Math.floor(p.lng/NN_CELL);
+    let a = m.get(k); if(!a) m.set(k, a=[]);
+    a.push(p);
+  }
+  return m;
+}
+// Procura em anéis crescentes e pára assim que o anel seguinte já não possa
+// conter nada mais perto do que o melhor encontrado. Só o perímetro de cada anel
+// é percorrido: varrer o quadrado inteiro tornava a procura cúbica no raio e
+// bastava isso para bloquear o desenho do mapa durante dezenas de segundos.
+const NN_RMAX = 25;   // ~21 km. Acima disto nenhuma regra de distância se aplica.
+// `limite` corta a procura a uma distância a partir da qual a resposta já não muda
+// nada. A camada de elegibilidade só precisa de saber se há algo a menos de 1500 m;
+// procurar a farmácia mais próxima de verdade, célula a célula, é trabalho deitado
+// fora e é o que fazia a diferença entre desenhar num instante ou em meio minuto.
+function nearestNN(lat,lng,idx,limite){
+  if(!idx || !idx.size) return {d:Infinity, item:null};
+  const gy = Math.floor(lat/NN_CELL), gx = Math.floor(lng/NN_CELL);
+  const rMax = limite ? Math.min(NN_RMAX, Math.ceil(limite/NN_LADO)+1) : NN_RMAX;
+  let best = Infinity, item = null;
+  for(let r=0; r<=rMax; r++){
+    if(item && (r-1)*NN_LADO > best) break;
+    for(let k=-r; k<=r; k++){
+      const cells = r===0 ? [[0,0]] : [[-r,k],[r,k],[k,-r],[k,r]];
+      for(const [dy,dx] of cells){
+        const a = idx.get((gy+dy)+':'+(gx+dx));
+        if(!a) continue;
+        for(const q of a){ const d = dist(lat,lng,q.lat,q.lng); if(d<best){ best=d; item=q; } }
+      }
+    }
+  }
+  return {d:best, item};
+}
+// Os índices só são reconstruídos quando os dados ou a origem mudam.
+let idxVer = 0, idxCache = {v:-1};
+function bumpIdx(){ idxVer++; }
+function IDX(){
+  if(idxCache.v !== idxVer){
+    idxCache = {v:idxVer, ph:buildNN(rivals()), hu:buildNN(S.health.filter(h=>h.legal)),
+                huAll:buildNN(S.health)};
+  }
+  return idxCache;
+}
+// A farmácia que se transfere deixa de existir no local de origem, por isso não pode
+// contar para a distância mínima em relação a si própria.
+function rivals(){
+  if(!S.origin) return S.pharms;
+  return S.pharms.filter(p=>dist(S.origin.lat,S.origin.lng,p.lat,p.lng) > 40);
+}
+
+/* ---------------- avaliação legal ---------------- */
+// Devolve o estado de um ponto candidato. status: 'ok' | 'warn' | 'bad'
+function evaluate(lat,lng){
+  const m = S.margin;
+  const ix = IDX();
+  const others = rivals();
+  const nP = nearestNN(lat,lng,ix.ph);
+  const nH = nearestNN(lat,lng,ix.hu);
+
+  // 500 m entre farmácias
+  let ph;
+  if(!isFinite(nP.d))      ph={s:'warn', txt:'Sem farmácias carregadas nesta área.'};
+  else if(nP.d >= D_PH+m)  ph={s:'ok',   txt:fmt(nP.d)+' à farmácia mais próxima.'};
+  else if(nP.d >= D_PH)    ph={s:'warn', txt:fmt(nP.d)+' — acima dos 500 m mas dentro da margem de '+m+' m.'};
+  else                     ph={s:'bad',  txt:fmt(nP.d)+' — abaixo dos 500 m exigidos.'};
+  if(ph.s!=='ok' && nP.item) ph.txt += ' ('+nP.item.name+')';
+  // Uma posição situada pela morada pode estar dezenas de metros ao lado. Dizer isso
+  // é a diferença entre um veredicto e um palpite com ar de veredicto.
+  if(nP.item && nP.item.transf) ph.txt += ' Não é uma farmácia em funcionamento: é um local '+
+    'com transferência aprovada pelo Infarmed'+(nP.item.pub?' (publicada em '+nP.item.pub+')':'')+
+    ', ainda por ocupar. Posição aproximada pela morada.';
+  else if(nP.item && nP.item.aprox) ph.txt += ' Atenção: a posição desta farmácia é aproximada, '+
+    'situada pela morada ('+nP.item.morada+'). Confirmar em planta.';
+
+  // 100 m a unidades de saúde
+  let hu;
+  if(S.freg)               hu={s:'ok',   txt:'Dispensado: freguesia com menos de 4000 habitantes.'};
+  else if(!isFinite(nH.d)) hu={s:'warn', txt:'Nenhum centro de saúde, extensão ou hospital identificado nesta área.'};
+  else if(nH.d >= D_HU+m)  hu={s:'ok',   txt:fmt(nH.d)+' à unidade de saúde mais próxima.'};
+  else if(nH.d >= D_HU)    hu={s:'warn', txt:fmt(nH.d)+' — acima dos 100 m mas dentro da margem de '+m+' m.'};
+  else                     hu={s:'bad',  txt:fmt(nH.d)+' — abaixo dos 100 m exigidos.'};
+  if(hu.s!=='ok' && nH.item) hu.txt += ' ('+nH.item.name+')';
+
+  // elegibilidade da origem
+  let el, raio=null;
+  if(!S.origin){
+    el={s:'na', txt:'Marque a localização atual da farmácia para testar este requisito.'};
+  } else {
+    const dOrig = dist(lat,lng,S.origin.lat,S.origin.lng);
+    raio = dOrig;
+    const nv = nearestNN(S.origin.lat,S.origin.lng,ix.ph);
+    if(S.excecional)        el={s:'ok', txt:'Dispensado: regime excecional de funcionamento nos últimos 3 anos.'};
+    else if(nv.d < D_ELEG)  el={s:'ok', txt:'Cumprido na origem: farmácia a '+fmt(nv.d)+' ('+(nv.item?nv.item.name:'')+'), menos de 1000 m.'};
+    else if(dOrig <= D_RAIO)el={s:'ok', txt:'Dispensado: destino a '+fmt(dOrig)+' da origem, dentro do raio de 750 m.'};
+    // Entre 1000 m e 1000 m + margem o requisito pode estar cumprido: a medição legal
+    // entre limites exteriores é mais curta que esta, medida ponto a ponto.
+    else if(nv.d < D_ELEG+m) el={s:'warn',txt:'Farmácia mais próxima da origem a '+fmt(nv.d)+', mesmo acima dos 1000 m mas dentro da margem. Medir em planta entre limites exteriores: pode cumprir.'};
+    else                    el={s:'bad',txt:'Sem farmácia a menos de 1000 m da origem ('+fmt(nv.d)+') e destino a '+fmt(dOrig)+', fora do raio de 750 m.'};
+  }
+
+  // exceção do artigo 26.º n.º 7
+  let ex = null;
+  if(S.origin && ph.s==='bad'){
+    const dOrigPh = nearest(S.origin.lat,S.origin.lng, others);
+    if(dOrigPh.d < D_PH){
+      let piora = false;
+      for(const p of others){
+        const dNow = dist(S.origin.lat,S.origin.lng,p.lat,p.lng);
+        if(dNow > 1500) continue;
+        if(dist(lat,lng,p.lat,p.lng) < dNow-1) { piora = true; break; }
+      }
+      ex = piora
+        ? {s:'bad', txt:'Não aplicável: o destino fica mais perto de pelo menos uma farmácia existente.'}
+        : {s:'warn',txt:'Possivelmente aplicável: a origem já está a menos de 500 m de outra farmácia e o destino não se aproxima de nenhuma. Confirmar com o Infarmed.'};
+    }
+  }
+
+  const parts = [ph.s, hu.s, el.s].filter(x=>x!=='na');
+  let overall;
+  if(parts.includes('bad')) overall = (ex && ex.s==='warn' && hu.s!=='bad' && el.s!=='bad') ? 'warn' : 'bad';
+  else if(parts.includes('warn')) overall = 'warn';
+  else overall = 'ok';
+
+  return {overall, ph, hu, el, ex, raio, dPh:nP.d, dHu:nH.d, nearPh:nP.item, nearHu:nH.item};
+}
+
+/* ---------------- atratividade ---------------- */
+// Índice espacial dos pontos de comércio. Sem ele, cada célula do mapa de
+// elegibilidade percorreria os milhares de POI da área e a camada ficava inutilizável.
+// A célula tem de ser maior que o raio de 250 m também em longitude (a 38 N, 0.0035
+// de longitude vale cerca de 304 m), para que a vizinhança 3x3 nunca perca um ponto.
+const POI_CELL = 0.0035;
+let poiIdx = null;
+function buildPoiIndex(){
+  poiIdx = new Map();
+  for(const p of S.pois){
+    const k = Math.floor(p.lat/POI_CELL)+':'+Math.floor(p.lng/POI_CELL);
+    let a = poiIdx.get(k); if(!a) poiIdx.set(k, a=[]);
+    a.push(p);
+  }
+}
+function poisNear(lat,lng){
+  if(!poiIdx) buildPoiIndex();
+  const gy = Math.floor(lat/POI_CELL), gx = Math.floor(lng/POI_CELL), out = [];
+  for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
+    const a = poiIdx.get((gy+dy)+':'+(gx+dx));
+    if(a) for(const p of a) out.push(p);
+  }
+  return out;
+}
+
+function score(lat,lng){
+  let com = 0;
+  for(const p of poisNear(lat,lng)){
+    const d = dist(lat,lng,p.lat,p.lng);
+    if(d < 250) com += p.w * (1 - d/250);
+  }
+  // Escala absoluta e comparável entre concelhos. Curva de raiz porque a densidade
+  // comercial tem cauda muito longa: satura num valor equivalente a uma rua de comércio
+  // intenso, para não achatar tudo o resto no topo.
+  const sCom = Math.min(Math.sqrt(com/40), 1) * 50;
+
+  const nH = nearestNN(lat,lng,IDX().huAll,1400);
+  let sSau = 0;
+  if(isFinite(nH.d)){
+    if(nH.d <= 100) sSau = 0;
+    else if(nH.d <= 350) sSau = 30;
+    else if(nH.d < 1200) sSau = 30 * (1 - (nH.d-350)/850);
+  }
+
+  const nP = nearestNN(lat,lng,IDX().ph,1700);
+  const sCon = isFinite(nP.d) ? Math.max(0, Math.min(1,(nP.d-D_PH)/1000)) * 20 : 10;
+
+  return {total: sCom+sSau+sCon, com:sCom, sau:sSau, con:sCon, comRaw:com, dSau:nH.d, dPh:nP.d};
+}
+
+/* ---------------- camada de elegibilidade ---------------- */
+const GridLayer = L.GridLayer.extend({
+  createTile(coords){
+    const tile = L.DomUtil.create('canvas');
+    const size = this.getTileSize();
+    tile.width = size.x; tile.height = size.y;
+    if(map.getZoom() < ZOOM_MIN) return tile;
+    if(!S.pharms.length && !S.health.length) return tile;
+    const ctx = tile.getContext('2d');
+    const step = 5;
+    const nw = coords.scaleBy(size);
+    const m = S.margin;
+    const ix = IDX();
+    // Se a alínea a) não está cumprida na origem, só o raio de 750 m é aproveitável.
+    let cap = null;
+    if(S.origin && !S.excecional && nearestNN(S.origin.lat,S.origin.lng,ix.ph).d >= D_ELEG) cap = S.origin;
+    for(let y=0; y<size.y; y+=step){
+      for(let x=0; x<size.x; x+=step){
+        const ll = map.unproject(L.point(nw.x+x+step/2, nw.y+y+step/2), coords.z);
+        const c = cellColour(ll.lat, ll.lng, m, cap);
+        if(!c) continue;
+        ctx.fillStyle = c;
+        ctx.fillRect(x, y, step, step);
+      }
+    }
+    return tile;
+  }
+});
+
+// Classifica um ponto e diz QUAL a regra que o bloqueia. Separar o motivo do
+// veredicto é o que permite responder "porque não posso aqui" só de olhar o mapa.
+// huLegal e others ficaram para tras: as distancias vem agora do indice espacial.
+// Nenhum limiar aqui passa dos 1000 m, por isso 1500 m chega e sobra.
+const CLS_LIM = 1500;
+function classify(lat,lng,m,cap){
+  const ix = IDX();
+  const dP = nearestNN(lat,lng,ix.ph,CLS_LIM).d;
+  const dH = S.freg ? Infinity : nearestNN(lat,lng,ix.hu,CLS_LIM).d;
+  if(dP < D_PH)  return {state:'bad', why:'farmacia', d:dP};
+  if(dH < D_HU)  return {state:'bad', why:'saude',    d:dH};
+  if(cap && dist(lat,lng,cap.lat,cap.lng) > D_RAIO)
+                 return {state:'bad', why:'raio',     d:dist(lat,lng,cap.lat,cap.lng)};
+  if(dP < D_PH+m)return {state:'margem', why:'farmacia', d:dP};
+  if(dH < D_HU+m)return {state:'margem', why:'saude',    d:dH};
+  return {state:'ok', why:null, dP, dH};
+}
+
+const WHY_TXT = {
+  farmacia:'farmácia a menos de 500 m',
+  saude:'unidade de saúde a menos de 100 m',
+  raio:'fora do raio de 750 m permitido'
+};
+
+function cellColour(lat,lng,m,cap){
+  const c = classify(lat,lng,m,cap);
+
+  if(S.mapMode==='bloqueio'){
+    // Pergunta: onde NÃO posso? Bloqueado fica opaco e a cor diz o motivo.
+    // O que é permitido fica quase transparente, para saltar à vista como um buraco.
+    if(c.state==='bad')    return c.why==='saude' ? 'rgba(147,51,234,0.52)'
+                                : c.why==='raio'  ? 'rgba(71,85,105,0.55)'
+                                :                   'rgba(220,38,38,0.50)';
+    if(c.state==='margem') return 'rgba(245,158,11,0.45)';
+    return 'rgba(34,197,94,0.10)';
+  }
+
+  // Pergunta: onde compensa? O bloqueado apaga-se e só o elegível ganha cor.
+  if(c.state==='bad')    return 'rgba(15,23,42,0.55)';
+  if(c.state==='margem') return 'rgba(245,158,11,0.30)';
+  const s = score(lat,lng).total;                       // 0..100
+  const t = Math.max(0, Math.min(1, s/70));
+  const a = 0.25 + t*0.50;
+  const g = Math.round(90 + t*107);                     // 90 -> 197
+  return 'rgba(34,'+g+',94,'+a.toFixed(2)+')';
+}
+
+// Resumo em linguagem corrente da área visível.
+function summarise(bounds){
+  const b = Array.isArray(bounds) ? L.latLngBounds(bounds) : map.getBounds();
+  if(!S.pharms.length){ return null; }
+  const m = S.margin;
+  let cap = null;
+  if(S.origin && !S.excecional && nearestNN(S.origin.lat,S.origin.lng,IDX().ph).d >= D_ELEG) cap = S.origin;
+  const N = 46, dLat=(b.getNorth()-b.getSouth())/N, dLng=(b.getEast()-b.getWest())/N;
+  let tot=0, ok=0, margem=0, why={farmacia:0,saude:0,raio:0};
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const c = classify(b.getSouth()+(i+.5)*dLat, b.getWest()+(j+.5)*dLng, m, cap);
+    tot++;
+    if(c.state==='ok') ok++;
+    else if(c.state==='margem') margem++;
+    else why[c.why]++;
+  }
+  const pc = n => Math.round(100*n/tot);
+  return {tot, ok:pc(ok), margem:pc(margem), bloqueado:pc(tot-ok-margem),
+          farmacia:pc(why.farmacia), saude:pc(why.saude), raio:pc(why.raio)};
+}
+
+function renderSummary(bounds){
+  const el = document.getElementById('resumo');
+  if(map.getZoom() < ZOOM_MIN){
+    el.innerHTML = '<p class="note">Aproxime até ao nível '+ZOOM_MIN+' para o radar avaliar esta área. De mais longe, use o <a href="nacional.html" style="color:#38bdf8">mapa nacional</a>.</p>';
+    return;
+  }
+  const r = summarise(bounds);
+  if(!r){ el.innerHTML = '<p class="note">Sem farmácias nesta área. Verifique se a base nacional carregou.</p>'; return; }
+  const linhas = [];
+  if(r.farmacia) linhas.push('<li><i style="background:#dc2626"></i><b>'+r.farmacia+'%</b> por haver outra farmácia a menos de 500 m</li>');
+  if(r.saude)    linhas.push('<li><i style="background:#9333ea"></i><b>'+r.saude+'%</b> por haver uma unidade de saúde a menos de 100 m</li>');
+  if(r.raio)     linhas.push('<li><i style="background:#475569"></i><b>'+r.raio+'%</b> por ficar fora do raio de 750 m permitido a esta farmácia</li>');
+  // Para quem faz intermediacao, saber de quem sao as farmacias da zona vale tanto
+  // como saber onde ha' espaco.
+  const reais = S.pharms.filter(p=>!p.transf && !p.manual);
+  const donos = new Map();
+  for(const p of reais) if(p.dono) donos.set(p.dono, (donos.get(p.dono)||0)+1);
+  const independentes = [...donos.values()].filter(n=>n===1).length;
+  const trPorOcupar = S.pharms.filter(p=>p.transf).length;
+  const extra = donos.size
+    ? '<p class="note"><b>'+reais.length+'</b> farmácias de <b>'+donos.size+'</b> proprietários'+
+      (independentes?', '+independentes+' com uma só farmácia':'')+'.'+
+      (trPorOcupar?' Mais <b>'+trPorOcupar+'</b> com transferência aprovada por ocupar.':'')+'</p>'
+    : '';
+  el.innerHTML =
+    '<p class="big"><b>'+r.bloqueado+'%</b> desta área está fechada à transferência.</p>'+
+    (linhas.length ? '<ul class="motivos">'+linhas.join('')+'</ul>' : '')+
+    '<p class="note"><b>'+r.ok+'%</b> está livre'+(r.margem?' e <b>'+r.margem+'%</b> fica tão em cima do limite que só medindo em planta se sabe':'')+'.</p>'+extra;
+}
+
+let grid = new GridLayer({opacity:1}).addTo(map);
+const refreshGrid = debounce(()=>{ if(document.getElementById('lyGrid').checked) grid.redraw(); }, 120);
+
+/* ---------------- desenho ---------------- */
+function fmt(d){ return !isFinite(d) ? '—' : (d<1000 ? Math.round(d)+' m' : (d/1000).toFixed(2)+' km'); }
+
+function draw(){
+  bumpIdx();
+  gExcl.clearLayers(); gPh.clearLayers(); gHu.clearLayers(); gPoi.clearLayers(); gTr.clearLayers();
+  const showExcl = document.getElementById('lyExcl').checked;
+  const others = new Set(rivals());
+  const perto = map.getZoom() >= ZOOM_MIN;
+
+  for(const p of (perto ? S.pharms : [])){
+    // a farmácia que se transfere não gera zona de exclusão contra si própria
+    const cor = p.transf ? '#e879f9' : p.aprox ? '#f59e0b' : '#0ea5e9';
+    if(showExcl && others.has(p)) L.circle([p.lat,p.lng],{radius:D_PH,color:p.transf?'#c026d3':'#ef4444',
+      weight:1,opacity:.55,fill:false,interactive:false,dashArray:p.aprox?'5 5':null}).addTo(gExcl);
+    L.circleMarker([p.lat,p.lng],{radius:p.transf?6:5,color:cor,weight:2,
+      fillColor:p.transf?'#701a75':p.aprox?'#1e293b':'#38bdf8',fillOpacity:1,
+      dashArray:p.aprox?'3 3':null})
+      .bindTooltip(tooltipFarmacia(p),{className:'lgt'})
+      .on('click',()=>editPoint(p,'ph'))
+      .addTo(gPh);
+  }
+  for(const h of (perto ? S.health : [])){
+    if(showExcl && h.legal) L.circle([h.lat,h.lng],{radius:D_HU,color:'#f59e0b',weight:1,opacity:.7,fill:false,interactive:false}).addTo(gExcl);
+    L.circleMarker([h.lat,h.lng],{radius:5,color:h.legal?'#7c3aed':'#64748b',weight:2,fillColor:h.legal?'#a78bfa':'#94a3b8',fillOpacity:1})
+      .bindTooltip(h.name+'<br>'+(h.legal?'Conta para a regra dos 100 m':'Não conta (clique para alternar)'),{className:'lgt'})
+      .on('click',()=>editPoint(h,'hu'))
+      .addTo(gHu);
+  }
+  // Transferencias aprovadas que nao tapam o local: as ja' executadas, e as antigas
+  // que o registo do Infarmed nao confirma. Ficam a' vista porque dizem para onde a
+  // concorrencia se mexeu, mas nao entram em conta nenhuma.
+  if(perto && document.getElementById('lyTransf').checked){
+    for(const t of NAC.tr){
+      if(t.bloqueia) continue;
+      if(!map.getBounds().pad(0.2).contains([t.lat,t.lng])) continue;
+      L.circleMarker([t.lat,t.lng],{radius:4,color:'#a855f7',weight:1.5,fillColor:'#3b0764',
+        fillOpacity:.85,dashArray:'2 2'})
+        .bindTooltip('<b>Transferência aprovada</b> — Farmácia '+t.name+
+          (t.pub?'<br>Publicada em '+t.pub:'')+
+          (t.feita ? '<br>Já executada: a farmácia consta do registo aqui.'
+                   : '<br>Aprovada há mais de 3 anos e sem correspondência no registo. '+
+                     'Não conta como bloqueio; confirme no Infarmed.'),{className:'lgt'})
+        .addTo(gTr);
+    }
+  }
+  if(document.getElementById('lyPois').checked && map.getZoom()>=15){
+    for(const p of S.pois)
+      L.circleMarker([p.lat,p.lng],{radius:2.2,color:'#facc15',weight:0,fillColor:'#facc15',fillOpacity:.55,interactive:false}).addTo(gPoi);
+  }
+  drawOrigin(); drawCands();
+  refreshGrid(); refreshSummary();
+}
+const refreshSummary = debounce(()=>{ try{ renderSummary(); }catch(e){} }, 200);
+
+// O que se quer saber ao passar o rato por cima de uma farmácia: de quem é, e se
+// aquilo ali é uma farmácia a sério ou um sítio já prometido a outra.
+function tooltipFarmacia(p){
+  if(p.transf){
+    return '<b>Transferência aprovada</b><br>Farmácia '+p.name+
+      (p.pub?'<br>Publicada em '+p.pub:'')+
+      '<br>Vem de: '+(p.origem||'origem não identificada')+
+      '<br><b>O local está tomado</b> — posição aproximada pela morada.';
+  }
+  let t = '<b>'+p.name+'</b>'+(p.manual?' (manual)':'');
+  if(p.dono){
+    t += '<br>'+p.dono;
+    if(p.nDono>1) t += '<br><b>'+p.nDono+' farmácias</b> deste proprietário'+
+      (p.nDono>=4?' — no limite legal de 4':'');
+    else t += '<br>Proprietário de uma só farmácia';
+  }
+  if(p.aprox) t += '<br><b>Posição aproximada</b>, situada pela morada:<br>'+p.morada+
+                   '<br>Medir em planta antes de decidir.';
+  return t;
+}
+
+function drawOrigin(){
+  bumpIdx();
+  gOrigin.clearLayers();
+  const el = document.getElementById('originInfo');
+  if(!S.origin){
+    el.textContent = 'Sem origem definida. A origem serve para testar o requisito de elegibilidade do artigo 26.º n.º 2 a) e o raio de 750 m.';
+    return;
+  }
+  L.circleMarker([S.origin.lat,S.origin.lng],{radius:8,color:'#fff',weight:3,fillColor:'#f43f5e',fillOpacity:1})
+    .bindTooltip('Farmácia a transferir',{className:'lgt',permanent:false}).addTo(gOrigin);
+  L.circle([S.origin.lat,S.origin.lng],{radius:D_RAIO,color:'#f43f5e',weight:1.5,dashArray:'6 5',fill:false,interactive:false}).addTo(gOrigin);
+  L.circle([S.origin.lat,S.origin.lng],{radius:D_ELEG,color:'#f43f5e',weight:1,dashArray:'2 6',fill:false,opacity:.6,interactive:false}).addTo(gOrigin);
+
+  const nv = nearest(S.origin.lat,S.origin.lng,rivals());
+  const ok = S.excecional || nv.d < D_ELEG;
+  el.innerHTML = 'Origem em '+S.origin.lat.toFixed(5)+', '+S.origin.lng.toFixed(5)+'.<br>'
+    + 'Farmácia mais próxima da origem: <strong>'+fmt(nv.d)+'</strong>'+(nv.item?' ('+nv.item.name+')':'')+'.<br>'
+    + (ok
+      ? '<span style="color:#86efac">Requisito da alínea a) cumprido — pode transferir para qualquer ponto elegível do concelho.</span>'
+      : '<span style="color:#fcd34d">Sem farmácia a menos de 1000 m. O destino tem de ficar dentro do raio tracejado de 750 m, salvo regime excecional.</span>');
+}
+
+function editPoint(p, kind){
+  if(kind==='hu'){
+    p.legal = !p.legal;
+    bumpIdx();
+    saveManual(); draw();
+    return;
+  }
+  if(p.manual && confirm('Remover "'+p.name+'"?')){
+    S.pharms = S.pharms.filter(x=>x!==p);
+    saveManual(); draw();
+  }
+}
+
+/* ---------------- dados OSM ---------------- */
+/* ---------------- base nacional ---------------- */
+// Todas as farmácias e unidades de saúde do país de uma só vez, de um ficheiro local.
+// Antes o mapa só sabia o que estivesse dentro da área carregada à mão do Overpass:
+// 20 a 30 segundos de espera por cada zona, e nada sabido fora dela. Agora a camada
+// de bloqueio está certa em qualquer ponto do país mal a página abre.
+//
+// A lista é a do **registo do Infarmed**, não a do OpenStreetMap. O OSM está
+// incompleto — faltavam-lhe duas das dez farmácias licenciadas de Beja — e no teste
+// dos 500 m uma farmácia em falta pinta de verde um sítio onde a lei não deixa ir.
+// Onde a farmácia oficial casou com um ponto do OSM, a coordenada é a do OSM e é
+// precisa; as restantes foram geocodificadas pela morada e vêm marcadas como
+// aproximadas, porque aí a distância tem de ser confirmada em planta.
+const NAC = {ph:[], hu:[], tr:[], data:null, trData:null, ok:false};
+
+function setBase(t, err){
+  const e = document.getElementById('base');
+  e.textContent = t; e.className = err ? 'note err' : 'note';
+}
+
+async function carregarBaseNacional(){
+  try{
+    const r = await fetch('dados/pontos-nacionais.json');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+    NAC.ph = j.farmacias.map(p=>({id:p.i, lat:p.y, lng:p.x, name:p.n, manual:false,
+                                  aprox:!p.e, morada:p.m||'', conc:p.c||'',
+                                  dono:p.d||'', nDono:p.q||0}));
+    NAC.hu = j.saude.map(h=>({id:h.i, lat:h.y, lng:h.x, name:h.n, legal:!!h.l, manual:false}));
+    NAC.data = j.gerado; NAC.ok = true;
+    const nAprox = NAC.ph.filter(p=>p.aprox).length;
+    setBase(NAC.ph.length.toLocaleString('pt-PT')+' farmácias licenciadas (registo do '+
+            'Infarmed, '+NAC.data+'), o país inteiro, sem carregar zona a zona. '+
+            (NAC.ph.length-nAprox).toLocaleString('pt-PT')+' com posição exata e '+
+            nAprox.toLocaleString('pt-PT')+' situadas pela morada — estas aparecem a '+
+            'tracejado e a distância tem de ser confirmada em planta.');
+    // Meia dúzia de farmácias licenciadas não tem morada que o geocodificador
+    // entenda. Pô-las no centro do concelho seria inventar uma zona de exclusão onde
+    // ela não existe; calá-las seria repetir o erro que nos trouxe até aqui. Ficam
+    // listadas, com a morada, para serem acrescentadas à mão quando forem ao caso.
+    const sp = j.semPosicao || [];
+    if(sp.length){
+      document.getElementById('semPos').innerHTML =
+        '<details><summary>'+sp.length+' farmácias licenciadas ficaram sem posição — '+
+        'ver quais</summary><ul>'+sp.map(x=>'<li><b>'+x.n+'</b>, '+x.c+
+        (x.m?' — '+x.m:'')+'</li>').join('')+'</ul>'+
+        '<p class="note">Não estão no mapa. Se trabalhar num destes concelhos, '+
+        'marque-as à mão com <b>+ Farmácia</b> antes de confiar no verde.</p></details>';
+    }
+    await carregarTransferencias();
+    aplicarBase();
+  }catch(e){
+    setBase('Não foi possível carregar a base nacional ('+e.message+'). Corra '+
+            'dados/nacional_pontos.py para a gerar. Sem ela o mapa fica sem farmácias.', true);
+  }
+}
+
+// As transferências já aprovadas pelo Infarmed. Um local pode estar livre de farmácias
+// e estar prometido a uma que ainda não se mudou: é o artigo 25.º da Portaria a
+// bloquear o sítio, e era o maior ponto cego desta ferramenta.
+async function carregarTransferencias(){
+  try{
+    const r = await fetch('dados/transferencias.json');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+    NAC.tr = j.transferencias.map(t=>({id:'tr/'+t.n+t.pub, lat:t.y, lng:t.x, name:t.n,
+      manual:false, aprox:true, transf:true, feita:!!t.f, bloqueia:!!t.b, conc:t.c||'',
+      morada:t.m||'', origem:t.o||'', pub:t.pub||'', delib:t['del']||''}));
+    NAC.trData = j.gerado;
+  }catch(e){
+    NAC.tr = [];
+    console.warn('sem lista de transferências:', e.message);
+  }
+}
+
+// Passa para o estado de trabalho só os pontos da área visível, com a mesma folga de
+// 1100 m usada no resto da app: uma farmácia logo a seguir à borda continua a contar.
+function aplicarBase(){
+  if(!NAC.ok) return;
+  const b = map.getBounds(), c = b.getCenter();
+  const dLat = 1100/111320, dLng = 1100/(111320*Math.cos(c.lat*RAD));
+  const sul=b.getSouth()-dLat, nor=b.getNorth()+dLat, oes=b.getWest()-dLng, est=b.getEast()+dLng;
+  const dentro = p => p.lat>=sul && p.lat<=nor && p.lng>=oes && p.lng<=est;
+  const man = loadManual(), ov = man.overrides || {};
+  // As que ainda não se mudaram entram como farmácias: no dia em que se mudarem, o
+  // local fica ocupado, e é por isso que a lei já o protege hoje. As que já se mudaram
+  // estão no registo do Infarmed e entrariam duas vezes.
+  const contarTr = document.getElementById('chkTransf').checked;
+  const trs = (contarTr ? NAC.tr.filter(t=>t.bloqueia) : []).filter(dentro);
+  S.pharms = NAC.ph.filter(dentro).concat(trs, man.pharms||[]);
+  S.health = NAC.hu.filter(dentro)
+    .map(h => (h.id in ov) ? Object.assign({}, h, {legal: !!ov[h.id]}) : h)
+    .concat(man.health||[]);
+  draw();
+}
+const refreshBase = debounce(aplicarBase, 150);
+
+const OVERPASS = ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+function setStatus(t, err, accao){
+  const e=document.getElementById('status'); e.textContent=t; e.className = err?'err':'';
+  // Um erro que o utilizador pode resolver deve trazer o botao que o resolve.
+  if(accao){
+    const b=document.createElement('button');
+    b.type='button'; b.className='statusAct'; b.textContent=accao.label;
+    b.addEventListener('click', accao.fn);
+    e.appendChild(b);
+  }
+}
+
+// Area maxima analisada de uma vez. Acima disto a consulta ao Overpass demora
+// demasiado e a grelha de bloqueio fica pesada de desenhar.
+const AREA_MAX = 45;
+function areaVisivelKm2(b){
+  const w = dist(b.getSouth(),b.getWest(),b.getSouth(),b.getEast())/1000;
+  const h = dist(b.getSouth(),b.getWest(),b.getNorth(),b.getWest())/1000;
+  return {w,h,a:w*h};
+}
+// Cada nivel de zoom divide a area por 4.
+function aproximarParaAnalise(){
+  const a = areaVisivelKm2(map.getBounds()).a;
+  if(a <= AREA_MAX) return;
+  const saltos = Math.ceil(Math.log(a/AREA_MAX)/Math.log(4));
+  map.setZoom(Math.min(19, map.getZoom()+saltos), {animate:false});
+}
+
+async function overpass(query){
+  let last;
+  for(const url of OVERPASS){
+    try{
+      const r = await fetch(url,{method:'POST',body:'data='+encodeURIComponent(query),
+        headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){ last=e; }
+  }
+  throw last;
+}
+
+// Só estas categorias podem ser "extensão de saúde, centro de saúde ou estabelecimento
+// hospitalar". Dentistas, ópticas, fisioterapia e afins vão para comércio e serviços.
+const HEALTH_AMENITY = new Set(['hospital','clinic','doctors']);
+const HEALTH_CARE    = new Set(['hospital','centre','clinic','doctor']);
+const HU_RX = /centro de sa[uú]de|extens[aã]o de sa[uú]de|hospital|centro hospitalar|unidade local de sa[uú]de|\bULS\b|\bUSF\b|\bUCSP\b|\bUCC\b|\bURAP\b|unidade de sa[uú]de|urg[êe]ncia/i;
+function isLegalHealth(tags, name){
+  if(tags.amenity==='hospital') return true;
+  if(tags.healthcare==='hospital' || tags.healthcare==='centre') return true;
+  if(HU_RX.test(name||'')) return true;
+  return false;
+}
+const POI_W = {
+  supermarket:3, marketplace:2.5, department_store:2.5, bank:2, post_office:2,
+  school:2, kindergarten:1.5, library:1.5, townhall:1.5, bus_station:2.5,
+  fuel:1, bakery:1.4, butcher:1.2, greengrocer:1.2, convenience:1.5,
+  clothes:1, hairdresser:1, optician:1.2, cafe:1, restaurant:.9, fast_food:.8, pub:.6
+};
+
+async function loadArea(bounds){
+ try{
+  const b = bounds ? L.latLngBounds(bounds) : map.getBounds();
+  const wKm = dist(b.getSouth(),b.getWest(),b.getSouth(),b.getEast())/1000;
+  if(wKm < 0.05){ setStatus('A área visível é nula. Redimensione a janela e tente novamente.', true); return; }
+  const hKm = dist(b.getSouth(),b.getWest(),b.getNorth(),b.getWest())/1000;
+  if(wKm*hKm > AREA_MAX){
+    setStatus('Área demasiado grande ('+Math.round(wKm*hKm)+' km²). O radar analisa no máximo '+AREA_MAX+' km² de cada vez.',
+      true, {label:'Aproximar e carregar aqui', fn:()=>{ aproximarParaAnalise(); setTimeout(()=>loadArea(), 60); }});
+    return;
+  }
+  // Carrega para além da área visível. Sem esta folga, uma farmácia logo a seguir à
+  // borda ficava invisível e os locais junto ao limite apareciam elegíveis sem o serem.
+  // 1100 m cobre a regra dos 500 m com margem e ainda o teste dos 1000 m na origem.
+  const dLat = 1100/111320;
+  const dLng = 1100/(111320*Math.cos(b.getCenter().lat*RAD));
+  const bb = [b.getSouth()-dLat, b.getWest()-dLng, b.getNorth()+dLat, b.getEast()+dLng].map(n=>n.toFixed(5)).join(',');
+  setStatus('A consultar o OpenStreetMap...');
+  const q = `[out:json][timeout:90];
+(
+  nwr["amenity"~"^(hospital|clinic|doctors)$"](${bb});
+  nwr["healthcare"](${bb});
+  nwr["shop"](${bb});
+  nwr["amenity"~"^(bank|post_office|cafe|restaurant|fast_food|pub|bakery|marketplace|school|kindergarten|library|townhall|bus_station|fuel|cinema|theatre)$"](${bb});
+  nwr["public_transport"="station"](${bb});
+  nwr["office"](${bb});
+);
+out center tags;`;
+  try{
+    const j = await overpass(q);
+    // As farmácias e as unidades de saúde vêm da base nacional. Desta consulta só
+    // interessa o comércio e os serviços, que alimentam o índice de atratividade e
+    // são demasiados para caberem num ficheiro do país inteiro.
+    const po=[];
+    for(const el of j.elements){
+      const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
+      if(lat==null||lng==null) continue;
+      const t = el.tags||{}, name = t.name || t['name:pt'] || '';
+      if(HEALTH_AMENITY.has(t.amenity) || HEALTH_CARE.has(t.healthcare)){
+        // Um centro de saúde não é comércio. Já bloqueia pelos 100 m; um consultório
+        // ou um dentista, esses, geram movimento e contam.
+        po.push({lat,lng,w:isLegalHealth(t,name)?0:1.6,name});
+      } else {
+        const key = t.shop || t.amenity || (t.office?'office':null) || 'other';
+        po.push({lat,lng,w:POI_W[key] ?? (t.shop?1:(t.office?.5:.6)),name});
+      }
+    }
+    S.pois = po;
+    buildPoiIndex();
+    setStatus(S.pois.length+' pontos de comércio e serviços nesta área. O índice de atratividade já está disponível.');
+    draw();
+  }catch(e){
+    setStatus('Falha ao carregar dados: '+e.message+'. Tente novamente dentro de momentos.', true);
+  }
+ }catch(e){ setStatus('Erro inesperado ao carregar: '+e.message, true); }
+}
+
+async function loadBounds(){
+  const c = map.getCenter();
+  setStatus('A obter limites administrativos...');
+  const q = `[out:json][timeout:60];
+is_in(${c.lat.toFixed(5)},${c.lng.toFixed(5)})->.a;
+relation(pivot.a)["boundary"="administrative"]["admin_level"~"^(7|8)$"];
+out geom;`;
+  try{
+    const j = await overpass(q);
+    gBound.clearLayers();
+    const names=[];
+    for(const rel of j.elements){
+      const lvl = rel.tags.admin_level, nm = rel.tags.name||'';
+      names.push((lvl==='7'?'Concelho: ':'Freguesia: ')+nm);
+      const style = lvl==='7'
+        ? {color:'#38bdf8',weight:2.5,dashArray:'10 6',fill:false,interactive:false}
+        : {color:'#c084fc',weight:1.5,dashArray:'4 5',fill:false,interactive:false};
+      for(const mem of (rel.members||[])){
+        if(mem.type!=='way'||!mem.geometry) continue;
+        L.polyline(mem.geometry.map(g=>[g.lat,g.lon]), style).addTo(gBound);
+      }
+    }
+    setStatus(names.length ? names.join('  |  ') : 'Não foram encontrados limites administrativos neste ponto.');
+  }catch(e){ setStatus('Falha ao obter limites: '+e.message, true); }
+}
+
+async function geocode(){
+  const q = document.getElementById('q').value.trim();
+  if(!q) return;
+  setStatus('A procurar...');
+  try{
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pt&q='+encodeURIComponent(q));
+    const j = await r.json();
+    if(!j.length){ setStatus('Não encontrado.', true); return; }
+    const g = j[0], bb = g.boundingbox.map(Number);   // [sul, norte, oeste, este]
+    const wKm = dist(bb[0],bb[2],bb[0],bb[3])/1000, hKm = dist(bb[0],bb[2],bb[1],bb[2])/1000;
+    // Procurar "Beja" devolve o limite do concelho (2458 km²). Enquadrar isso punha o
+    // mapa a zoom 8 e o carregamento recusava por área, o que parecia que a app estava
+    // avariada. O lat/lon do resultado é o centro da localidade — é esse que interessa.
+    if(wKm*hKm > AREA_MAX){
+      map.setView([Number(g.lat), Number(g.lon)], 14);
+      setStatus(g.display_name+' — o limite administrativo tem '+Math.round(wKm*hKm)+' km², grande demais para analisar de uma vez. O mapa ficou centrado na localidade; arraste até à zona que lhe interessa e carregue os dados.');
+    } else {
+      map.fitBounds([[bb[0],bb[2]],[bb[1],bb[3]]]);
+      setStatus(g.display_name);
+    }
+  }catch(e){ setStatus('Falha na pesquisa: '+e.message, true); }
+}
+
+/* ---------------- painel de teste ---------------- */
+function renderTest(){
+  const vd = document.getElementById('verdict'), ck = document.getElementById('checks'), sc = document.getElementById('score');
+  const btn = document.getElementById('btnSave');
+  gTest.clearLayers();
+  if(!S.test){
+    vd.className='verdict v-idle'; vd.textContent='Marque um ponto para avaliar.';
+    ck.innerHTML=''; sc.innerHTML=''; btn.disabled=true; return;
+  }
+  const e = evaluate(S.test.lat,S.test.lng), s = score(S.test.lat,S.test.lng);
+  S.test.eval=e; S.test.score=s;
+
+  L.circleMarker([S.test.lat,S.test.lng],{radius:9,color:'#fff',weight:3,
+    fillColor:e.overall==='ok'?'#22c55e':e.overall==='warn'?'#f59e0b':'#ef4444',fillOpacity:1}).addTo(gTest);
+  L.circle([S.test.lat,S.test.lng],{radius:D_PH,color:'#fff',weight:1,dashArray:'4 4',fill:false,opacity:.7,interactive:false}).addTo(gTest);
+
+  vd.className = 'verdict v-'+(e.overall==='ok'?'ok':e.overall==='warn'?'warn':'bad');
+  vd.textContent = e.overall==='ok' ? 'Local elegível nos requisitos de distância.'
+                 : e.overall==='warn' ? 'A verificar — está dentro da margem ou depende de exceção.'
+                 : 'Local não elegível.';
+
+  const rows = [
+    ['Distância mínima de 500 m entre farmácias', e.ph],
+    ['Distância mínima de 100 m a unidade de saúde', e.hu],
+    ['Elegibilidade da origem (art. 26.º n.º 2 a) e n.º 4)', e.el]
+  ];
+  if(e.ex) rows.push(['Exceção do art. 26.º n.º 7', e.ex]);
+  rows.push(['Parecer favorável da câmara municipal', {s:'na',txt:'Requisito obrigatório e vinculativo. Não avaliável aqui.'}]);
+  ck.innerHTML = rows.map(([t,r])=>
+    '<div class="check"><span class="dot d-'+(r.s==='na'?'na':r.s)+'"></span><span><b>'+t+'</b><em>'+r.txt+'</em></span></div>').join('');
+
+  sc.innerHTML =
+    '<div class="kpi"><span>Índice de atratividade comercial</span><b>'+Math.round(s.total)+' / 100</b></div>'+
+    '<div class="scorebar"><i style="width:'+Math.min(100,s.total)+'%"></i></div>'+
+    '<div class="kpi"><span>Comércio e serviços em 250 m</span><b>'+Math.round(s.com)+' / 50</b></div>'+
+    '<div class="kpi"><span>Proximidade a unidades de saúde</span><b>'+Math.round(s.sau)+' / 30</b></div>'+
+    '<div class="kpi"><span>Folga face à concorrência</span><b>'+Math.round(s.con)+' / 20</b></div>'+
+    '<p class="note">Unidade de saúde mais próxima a '+fmt(s.dSau)+'. Farmácia mais próxima a '+fmt(s.dPh)+'.</p>';
+  btn.disabled = false;
+}
+
+/* ---------------- candidatos ---------------- */
+function drawCands(){
+  gCand.clearLayers();
+  S.cands.forEach((c,i)=>{
+    L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:
+      '<div style="background:#0ea5e9;color:#fff;border:2px solid #fff;border-radius:50%;width:22px;height:22px;'+
+      'display:flex;align-items:center;justify-content:center;font:700 11px system-ui">'+(i+1)+'</div>',
+      iconSize:[22,22],iconAnchor:[11,11]})}).bindTooltip(c.name,{className:'lgt'}).addTo(gCand);
+  });
+  const box = document.getElementById('cands');
+  if(!S.cands.length){ box.innerHTML='<p class="note">Nenhum candidato guardado.</p>'; document.getElementById('btnReport').disabled=true; return; }
+  document.getElementById('btnReport').disabled=false;
+  box.innerHTML = S.cands.map((c,i)=>{
+    const p = c.eval.overall==='ok'?'p-ok':c.eval.overall==='warn'?'p-warn':'p-bad';
+    const lbl = c.eval.overall==='ok'?'ELEGÍVEL':c.eval.overall==='warn'?'A VERIFICAR':'BLOQUEADO';
+    return '<div class="cand"><div class="t"><b>'+(i+1)+'. '+esc(c.name)+'</b><span class="pill '+p+'">'+lbl+'</span></div>'+
+      '<em>Atratividade '+Math.round(c.score.total)+'/100 · farmácia a '+fmt(c.eval.dPh)+' · saúde a '+fmt(c.eval.dHu)+'</em>'+
+      '<div class="acts"><button data-go="'+i+'">Ver</button><button data-del="'+i+'">Remover</button></div></div>';
+  }).join('');
+  box.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
+    const c=S.cands[b.dataset.go]; map.setView([c.lat,c.lng],17); S.test={lat:c.lat,lng:c.lng}; renderTest();
+  });
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ S.cands.splice(+b.dataset.del,1); persist(); drawCands(); });
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function report(){
+  const d = new Date().toLocaleDateString('pt-PT');
+  let t = '# Radar de transferência de farmácias — análise de locais\n\n';
+  t += 'Data: '+d+'\n';
+  t += 'Margem de segurança aplicada: '+S.margin+' m\n';
+  t += 'Freguesia de destino com menos de 4000 habitantes: '+(S.freg?'sim (dispensa os 100 m)':'não')+'\n';
+  t += 'Regime excecional de funcionamento: '+(S.excecional?'sim':'não')+'\n';
+  if(S.origin) t += 'Localização atual da farmácia: '+S.origin.lat.toFixed(6)+', '+S.origin.lng.toFixed(6)+'\n';
+  t += '\nQuadro legal: DL 307/2007 de 31 de agosto, artigos 26.º e 26.º-A (redação do DL 58/2024); Portaria 352/2012 de 30 de outubro, artigo 2.º (redação da Portaria 375/2025/1 de 4 de novembro).\n';
+  t += '\n---\n\n';
+  const ord = S.cands.map((c,i)=>({c,i})).sort((a,b)=>{
+    const r={ok:0,warn:1,bad:2};
+    return (r[a.c.eval.overall]-r[b.c.eval.overall]) || (b.c.score.total-a.c.score.total);
+  });
+  for(const {c,i} of ord){
+    const e=c.eval;
+    t += '## '+(i+1)+'. '+c.name+'\n\n';
+    t += '- Coordenadas: '+c.lat.toFixed(6)+', '+c.lng.toFixed(6)+'\n';
+    t += '- Ligação: https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=18/'+c.lat.toFixed(5)+'/'+c.lng.toFixed(5)+'\n';
+    t += '- Veredicto: '+(e.overall==='ok'?'ELEGÍVEL nos requisitos de distância':e.overall==='warn'?'A VERIFICAR':'BLOQUEADO')+'\n';
+    t += '- Índice de atratividade: '+Math.round(c.score.total)+'/100 (comércio '+Math.round(c.score.com)+'/50, saúde '+Math.round(c.score.sau)+'/30, concorrência '+Math.round(c.score.con)+'/20)\n\n';
+    t += '| Requisito | Estado | Nota |\n|---|---|---|\n';
+    const st=x=>x==='ok'?'Cumpre':x==='warn'?'A verificar':x==='bad'?'Não cumpre':'N/A';
+    t += '| 500 m entre farmácias | '+st(e.ph.s)+' | '+e.ph.txt+' |\n';
+    t += '| 100 m a unidade de saúde | '+st(e.hu.s)+' | '+e.hu.txt+' |\n';
+    t += '| Elegibilidade da origem | '+st(e.el.s)+' | '+e.el.txt+' |\n';
+    if(e.ex) t += '| Exceção art. 26.º n.º 7 | '+st(e.ex.s)+' | '+e.ex.txt+' |\n';
+    t += '| Parecer da câmara municipal | N/A | Obrigatório e vinculativo. A obter junto do município. |\n\n';
+  }
+  t += '---\n\n';
+  t += 'Aviso: análise preliminar baseada em dados do OpenStreetMap, que estão incompletos. As distâncias foram medidas ponto a ponto e não entre os limites exteriores dos edifícios, como a lei exige. Não estão considerados pedidos de transferência de terceiros já em curso, que bloqueiam locais nos termos do artigo 25.º da Portaria 352/2012. A prova legal é a certidão camarária prevista no artigo 20.º n.º 1 d) da mesma portaria.\n';
+
+  const blob = new Blob([t],{type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'transferencia-farmacia-'+new Date().toISOString().slice(0,10)+'.md';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ---------------- persistência ---------------- */
+const K='radar-farmacias-v1';
+function persist(){
+  try{
+    localStorage.setItem(K, JSON.stringify({
+      cands:S.cands, origin:S.origin, margin:S.margin, freg:S.freg, excecional:S.excecional,
+      mapMode:S.mapMode,
+      manual:{
+        pharms:S.pharms.filter(p=>p.manual),
+        health:S.health.filter(h=>h.manual),
+        // Só os pontos em vista estão em S.health. Substituir o mapa inteiro apagaria
+        // as correcções feitas noutras zonas.
+        overrides:Object.assign({}, loadManual().overrides||{},
+          Object.fromEntries(S.health.filter(h=>!h.manual).map(h=>[h.id,h.legal])))
+      },
+      view:{c:map.getCenter(), z:map.getZoom()}
+    }));
+  }catch(e){}
+}
+function loadManual(){
+  try{ return (JSON.parse(localStorage.getItem(K))||{}).manual || {}; }catch(e){ return {}; }
+}
+function restore(){
+  let d; try{ d = JSON.parse(localStorage.getItem(K)); }catch(e){}
+  if(!d) return;
+  S.cands = d.cands||[]; S.origin = d.origin||null;
+  S.margin = d.margin ?? 30; S.freg = !!d.freg; S.excecional = !!d.excecional;
+  S.mapMode = d.mapMode === 'atratividade' ? 'atratividade' : 'bloqueio';
+  const rb = document.querySelector('input[name=mm][value="'+S.mapMode+'"]'); if(rb) rb.checked = true;
+  S.pharms = (d.manual?.pharms)||[]; S.health = (d.manual?.health)||[];   // a base nacional junta-se a estes
+  document.getElementById('rngMargin').value = S.margin;
+  document.getElementById('lblMargin').textContent = S.margin+' m';
+  document.getElementById('chkFreg').checked = S.freg;
+  document.getElementById('chkExcecional').checked = S.excecional;
+  if(d.view?.c) map.setView([d.view.c.lat,d.view.c.lng], d.view.z||15);
+}
+// O mapa nacional envia-nos para aqui com #lat,lng,zoom. O hash manda sobre o estado guardado.
+function fromHash(){
+  const m = /^#(-?\d+\.?\d*),(-?\d+\.?\d*),(\d+)$/.exec(location.hash);
+  if(!m) return false;
+  map.setView([+m[1],+m[2]], +m[3]);
+  return true;
+}
+function saveManual(){ persist(); }
+
+/* ---------------- interações ---------------- */
+function setMode(m){
+  S.mode = S.mode===m ? null : m;
+  const ids = {origin:'btnOrigin', test:'btnTest', addPh:'btnAddPh', addHu:'btnAddHu'};
+  for(const [k,id] of Object.entries(ids)) document.getElementById(id).classList.toggle('on', S.mode===k);
+  document.getElementById('map').classList.toggle('crosshair', !!S.mode);
+}
+
+map.on('click', ev=>{
+  const {lat,lng} = ev.latlng;
+  if(S.mode==='origin'){ S.origin={lat,lng}; setMode(null); persist(); draw(); renderTest(); }
+  else if(S.mode==='test'){ S.test={lat,lng}; setMode(null); renderTest(); }
+  else if(S.mode==='addPh'){
+    const n = prompt('Nome da farmácia:','Farmácia');
+    if(n){ S.pharms.push({id:'m'+Date.now(),lat,lng,name:n,manual:true}); saveManual(); draw(); }
+    setMode(null);
+  }
+  else if(S.mode==='addHu'){
+    const n = prompt('Nome da unidade de saúde:','Centro de Saúde');
+    if(n){ S.health.push({id:'m'+Date.now(),lat,lng,name:n,legal:true,manual:true}); saveManual(); draw(); }
+    setMode(null);
+  }
+});
+
+document.getElementById('btnSearch').onclick = geocode;
+document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter') geocode(); });
+document.getElementById('btnLoad').onclick   = ()=>loadArea();
+document.getElementById('btnBounds').onclick = loadBounds;
+document.getElementById('btnOrigin').onclick = ()=>setMode('origin');
+document.getElementById('btnTest').onclick   = ()=>setMode('test');
+document.getElementById('btnAddPh').onclick  = ()=>setMode('addPh');
+document.getElementById('btnAddHu').onclick  = ()=>setMode('addHu');
+document.getElementById('btnReport').onclick = report;
+document.getElementById('btnSave').onclick = ()=>{
+  if(!S.test) return;
+  const n = prompt('Nome ou morada deste candidato:','Candidato '+(S.cands.length+1));
+  if(!n) return;
+  S.cands.push({name:n,lat:S.test.lat,lng:S.test.lng,eval:S.test.eval,score:S.test.score});
+  persist(); drawCands();
+};
+document.getElementById('rngMargin').oninput = e=>{
+  S.margin = +e.target.value;
+  document.getElementById('lblMargin').textContent = S.margin+' m';
+  persist(); refreshGrid(); refreshSummary(); renderTest();
+};
+document.getElementById('chkFreg').onchange = e=>{ S.freg=e.target.checked; bumpIdx(); persist(); refreshGrid(); refreshSummary(); renderTest(); };
+document.getElementById('chkExcecional').onchange = e=>{ S.excecional=e.target.checked; bumpIdx(); persist(); drawOrigin(); refreshGrid(); refreshSummary(); renderTest(); };
+document.getElementById('chkTransf').onchange = ()=>{ aplicarBase(); };
+document.getElementById('lyTransf').onchange = ()=>{ draw(); };
+document.getElementById('lyGrid').onchange = e=>{ e.target.checked ? grid.addTo(map) : map.removeLayer(grid); };
+document.querySelectorAll('input[name=mm]').forEach(r=>r.onchange = e=>{
+  S.mapMode = e.target.value; persist(); renderLegend(); refreshGrid();
+});
+
+function renderLegend(){
+  const l = document.getElementById('legenda');
+  l.innerHTML = S.mapMode==='bloqueio'
+    ? '<i style="background:#dc2626"></i>Fechado: farmácia a menos de 500 m<br>'+
+      '<i style="background:#9333ea"></i>Fechado: unidade de saúde a menos de 100 m<br>'+
+      '<i style="background:#475569"></i>Fechado: fora do raio de 750 m<br>'+
+      '<i style="background:#f59e0b"></i>Em cima do limite — medir em planta<br>'+
+      '<i style="background:rgba(34,197,94,.25);border:1px solid #22c55e"></i><b>Destapado: pode transferir para aqui</b><br>'+
+      '<i style="background:#1e293b;border:2px dashed #f59e0b"></i>Farmácia com posição aproximada pela morada<br>'+
+      '<i style="background:#701a75;border:2px solid #e879f9"></i>Local entregue a outra farmácia por transferência recente<br>'+
+      '<i style="background:#3b0764;border:1px dashed #a855f7"></i>Transferência aprovada, histórico (não bloqueia)'
+    : '<i style="background:#22c55e"></i>Livre e com muito movimento à volta<br>'+
+      '<i style="background:#166534"></i>Livre mas com pouco movimento<br>'+
+      '<i style="background:#f59e0b"></i>Em cima do limite — medir em planta<br>'+
+      '<i style="background:#1e293b;border:1px solid #334155"></i>Fechado pela lei';
+  l.innerHTML += '<br><i style="background:#38bdf8"></i>Farmácia &nbsp;<i style="background:#a78bfa"></i>Unidade de saúde';
+}
+
+// Leitura instantânea: diz por palavras o que está debaixo do cursor.
+const hb = document.getElementById('hoverbar');
+const hbDot = hb.querySelector('.hb-dot'), hbTxt = hb.querySelector('.hb-txt');
+map.on('mousemove', ev=>{
+  if(map.getZoom() < ZOOM_MIN){
+    hbDot.style.background = '#475569';
+    hbTxt.textContent = 'Aproxime até ao nível '+ZOOM_MIN+' para avaliar. A esta distância os 500 m não chegam a um punhado de pixels e o mapa mentiria. Para a vista de longe use o mapa nacional.';
+    return;
+  }
+  if(!S.pharms.length){ return; }
+  let cap = null;
+  if(S.origin && !S.excecional && nearestNN(S.origin.lat,S.origin.lng,IDX().ph).d >= D_ELEG) cap = S.origin;
+  const c = classify(ev.latlng.lat, ev.latlng.lng, S.margin, cap);
+  if(c.state==='ok'){
+    // classify corta a procura aos 1500 m porque mais longe que isso nao muda o
+    // veredicto. Para mostrar a distancia ao utilizador vale a pena ir buscar o valor
+    // exato, que e so uma procura por cada movimento do rato.
+    const ix = IDX();
+    const nP = nearestNN(ev.latlng.lat, ev.latlng.lng, ix.ph);
+    const dH = S.freg ? Infinity : nearestNN(ev.latlng.lat, ev.latlng.lng, ix.hu).d;
+    hbDot.style.background = nP.item && nP.item.aprox ? '#84cc16' : '#22c55e';
+    hbTxt.innerHTML = '<b>Pode transferir para aqui.</b> '+
+      (isFinite(nP.d) ? 'Farmácia mais próxima a '+fmt(nP.d) : 'Sem farmácias nas redondezas')+
+      (isFinite(dH) ? ', unidade de saúde a '+fmt(dH) : '')+'.'+
+      (nP.item && nP.item.aprox ? ' <b>Mas a posição dessa farmácia é aproximada</b> — medir em planta.' : '');
+  } else if(c.state==='margem'){
+    hbDot.style.background = '#f59e0b';
+    hbTxt.innerHTML = '<b>Em cima do limite.</b> '+fmt(c.d)+' — cumpre por pouco, tem de ser medido em planta entre limites exteriores.';
+  } else {
+    hbDot.style.background = c.why==='saude' ? '#9333ea' : c.why==='raio' ? '#475569' : '#dc2626';
+    hbTxt.innerHTML = '<b>Não pode transferir para aqui:</b> '+WHY_TXT[c.why]+' ('+fmt(c.d)+').';
+  }
+});
+map.on('mouseout', ()=>{ hbDot.style.background='#475569'; hbTxt.textContent='Passe o rato sobre o mapa para saber se pode transferir para ali.'; });
+document.getElementById('lyExcl').onchange = draw;
+document.getElementById('lyPois').onchange = draw;
+
+map.on('moveend zoomend', ()=>{ persist(); refreshBase(); refreshSummary(); if(document.getElementById('lyPois').checked) draw(); });
+
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+
+restore();
+const veioDoNacional = fromHash();
+renderLegend();
+draw();
+renderTest();
+setStatus(veioDoNacional
+  ? 'Concelho enquadrado. As farmácias já estão no mapa; carregue o comércio para ver a atratividade.'
+  : 'As farmácias do país já estão no mapa. Carregue o comércio desta área se quiser o índice de atratividade.');
+carregarBaseNacional();
+
+// Recolher o painel da'-lhe o ecra' todo para o mapa. O Leaflet tem de ser avisado da
+// mudanca de tamanho, senao fica com metade dos mosaicos por desenhar.
+document.getElementById('btnSide').addEventListener('click', ()=>{
+  const fechado = document.getElementById('app').classList.toggle('fechado');
+  document.getElementById('btnSide').textContent = fechado ? 'Mostrar painel' : 'Esconder painel';
+  setTimeout(()=>map.invalidateSize(), 60);
+});
+</script>
+</body>
+</html>

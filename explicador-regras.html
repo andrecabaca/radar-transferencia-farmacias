@@ -1,0 +1,430 @@
+<meta charset="utf-8">
+<title>Onde a Farmácia Não Pode Ir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+
+<style>
+:root{
+  --paper:#EEF1F4;
+  --card:#FFFFFF;
+  --ink:#0F1720;
+  --muted:#5B6875;
+  --hair:#D3DAE1;
+  --accent:#1B4965;
+  --accent-soft:#E2EAF0;
+  --blocked:#C0342C;
+  --health:#7B3FA0;
+  --radius:#546678;
+  --free:#1B7F4C;
+  --margin:#B87407;
+  --shadow:0 1px 2px rgba(15,23,32,.06), 0 8px 24px -12px rgba(15,23,32,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1319;
+    --card:#141C24;
+    --ink:#E6EDF3;
+    --muted:#93A1AE;
+    --hair:#26323D;
+    --accent:#7FB5D5;
+    --accent-soft:#17242E;
+    --blocked:#E8635A;
+    --health:#B98AD8;
+    --radius:#8496A8;
+    --free:#4FBE85;
+    --margin:#E0A03C;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1319;
+  --card:#141C24;
+  --ink:#E6EDF3;
+  --muted:#93A1AE;
+  --hair:#26323D;
+  --accent:#7FB5D5;
+  --accent-soft:#17242E;
+  --blocked:#E8635A;
+  --health:#B98AD8;
+  --radius:#8496A8;
+  --free:#4FBE85;
+  --margin:#E0A03C;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:Newsreader,Georgia,"Times New Roman",serif;
+  font-size:18px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
+.col{max-width:64ch}
+
+h1,h2,h3,.lbl{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+h1{font-size:clamp(2.1rem,5.4vw,3.5rem);line-height:1.04;font-weight:700;letter-spacing:-.022em;margin:0;text-wrap:balance}
+h2{font-size:clamp(1.35rem,2.7vw,1.75rem);font-weight:600;letter-spacing:-.014em;line-height:1.2;margin:0 0 14px;text-wrap:balance}
+h3{font-size:1.02rem;font-weight:600;letter-spacing:-.005em;margin:0 0 6px}
+p{margin:0 0 18px}
+strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 66%, var(--accent-soft) 66%)}
+.lbl{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.13em;color:var(--muted)}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+/* header */
+header{padding:76px 0 44px}
+header .lbl{display:block;margin-bottom:20px}
+.lede{font-size:clamp(1.1rem,2.1vw,1.32rem);line-height:1.5;color:var(--muted);margin:26px 0 0;max-width:56ch}
+.lede b{color:var(--ink);font-weight:500}
+
+/* the headline stat */
+.stat{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:0 20px;
+  margin:44px 0 0;padding:26px 28px;border-radius:3px;
+  background:var(--card);border:1px solid var(--hair);border-left:4px solid var(--blocked);
+  box-shadow:var(--shadow);
+}
+.stat .big{font-family:Archivo,sans-serif;font-size:clamp(3rem,9vw,4.6rem);font-weight:700;line-height:.9;letter-spacing:-.035em;color:var(--blocked);font-variant-numeric:tabular-nums}
+.stat .txt{flex:1 1 260px;font-size:1.02rem;line-height:1.45;color:var(--muted)}
+.stat .txt b{color:var(--ink);font-weight:500}
+
+section{padding:56px 0 0}
+.rule{border-top:1px solid var(--hair);padding-top:14px;margin-bottom:34px}
+
+/* three rules */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:20px;margin:30px 0 0}
+.rulecard{background:var(--card);border:1px solid var(--hair);border-radius:3px;padding:22px 22px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.rulecard .sw{display:block;width:100%;height:auto;margin:2px 0 16px;border-radius:2px;background:var(--paper)}
+.rulecard p{font-size:.94rem;line-height:1.55;color:var(--muted);margin:0 0 12px}
+.rulecard p:last-of-type{margin-bottom:0}
+.rulecard .cite{margin-top:auto;padding-top:14px;font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--muted);letter-spacing:.01em;line-height:1.5;border-top:1px dashed var(--hair)}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:.66rem;font-weight:600;letter-spacing:.06em;padding:3px 8px;border-radius:2px;margin-bottom:12px}
+.t-block{background:color-mix(in srgb, var(--blocked) 14%, transparent);color:var(--blocked)}
+.t-health{background:color-mix(in srgb, var(--health) 16%, transparent);color:var(--health)}
+.t-radius{background:color-mix(in srgb, var(--radius) 18%, transparent);color:var(--radius)}
+
+/* map */
+.mapwrap{background:var(--card);border:1px solid var(--hair);border-radius:3px;box-shadow:var(--shadow);padding:22px;margin:30px 0 0}
+#mapa{display:block;width:100%;height:auto}
+.maplegend{display:flex;flex-wrap:wrap;gap:8px 22px;margin:18px 0 0;padding-top:16px;border-top:1px solid var(--hair);font-size:.85rem;color:var(--muted)}
+.maplegend span{display:flex;align-items:center;gap:8px}
+.maplegend i{width:13px;height:13px;border-radius:2px;flex:none}
+.cap{font-size:.85rem;color:var(--muted);margin:14px 0 0;line-height:1.55}
+
+/* verdict list */
+.verdict{display:flex;flex-direction:column;gap:2px;margin:26px 0 0;background:var(--card);border:1px solid var(--hair);border-radius:3px;overflow:hidden;box-shadow:var(--shadow)}
+.vrow{display:flex;gap:16px;align-items:flex-start;padding:18px 22px;border-bottom:1px solid var(--hair)}
+.vrow:last-child{border-bottom:none}
+.vmark{font-family:"IBM Plex Mono",monospace;font-size:.68rem;font-weight:600;letter-spacing:.05em;padding:4px 9px;border-radius:2px;flex:none;margin-top:2px;min-width:74px;text-align:center}
+.v-ok{background:color-mix(in srgb, var(--free) 15%, transparent);color:var(--free)}
+.v-no{background:color-mix(in srgb, var(--blocked) 14%, transparent);color:var(--blocked)}
+.v-na{background:color-mix(in srgb, var(--radius) 16%, transparent);color:var(--radius)}
+.vrow div{flex:1}
+.vrow p{margin:4px 0 0;font-size:.92rem;color:var(--muted);line-height:1.5}
+
+/* comparison bars */
+.bars{margin:26px 0 0;display:flex;flex-direction:column;gap:16px}
+.bar{display:grid;grid-template-columns:1fr;gap:6px}
+.bar .top{display:flex;justify-content:space-between;align-items:baseline;gap:14px;font-size:.95rem}
+.bar .top b{font-weight:500}
+.bar .top .n{font-family:"IBM Plex Mono",monospace;font-size:.92rem;color:var(--muted)}
+.track{height:10px;background:var(--hair);border-radius:2px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.bar.now .track i{background:var(--blocked)}
+.bar .sub{font-size:.85rem;color:var(--muted);line-height:1.45}
+
+/* caveats */
+.warn{background:var(--card);border:1px solid var(--hair);border-left:4px solid var(--margin);border-radius:3px;padding:22px 24px;box-shadow:var(--shadow)}
+.warn h3{margin-bottom:10px}
+.warn ul{margin:0;padding-left:20px}
+.warn li{margin-bottom:11px;font-size:.95rem;line-height:1.55;color:var(--muted)}
+.warn li:last-child{margin-bottom:0}
+.warn li b{color:var(--ink);font-weight:500}
+
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--hair);font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--muted);line-height:1.7}
+
+@media (max-width:640px){
+  body{font-size:17px}
+  header{padding:48px 0 32px}
+  .stat{padding:22px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .fade{animation:up .6s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+}
+</style>
+
+<div class="wrap">
+
+<header class="fade">
+  <span class="lbl">Regras de localização do Infarmed &middot; caso Farmácia Pontes Leite, Marvila</span>
+  <h1>Onde a farmácia não pode ir</h1>
+  <p class="lede">Transferir uma farmácia não é escolher uma loja com boa montra. É primeiro descobrir o que <b>sobra</b> depois de a lei fechar quase tudo. Esta página mostra o que fica fechado, porquê, e o que resta.</p>
+
+  <div class="stat">
+    <span class="big num">82%</span>
+    <span class="txt">do território num raio de <b class="num">1,2 km</b> à volta da Farmácia Pontes Leite está <b>fechado à transferência</b>. Não por urbanismo, não por falta de lojas: só por causa das distâncias mínimas.</span>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="rule"><span class="lbl">As regras</span></div>
+    <h2>Três medidas decidem tudo</h2>
+    <p>Toda a gente fala nos 350 metros. Esse número deixou de existir. A Portaria n.º 375/2025/1 revogou a portaria de 2007 e, desde <strong>5 de novembro de 2025</strong>, o número é outro.</p>
+    <p>As três regras abaixo estão desenhadas à mesma escala, para se ver a diferença real de tamanho entre elas.</p>
+  </div>
+
+  <div class="rules">
+    <article class="rulecard">
+      <span class="tag t-block">Regra 1</span>
+      <svg class="sw" viewBox="0 0 300 150" role="img" aria-label="Duas farmácias com um afastamento mínimo de 500 metros">
+        <rect width="300" height="150" fill="none"/>
+        <circle cx="80" cy="75" r="58" fill="var(--blocked)" opacity=".14"/>
+        <circle cx="80" cy="75" r="58" fill="none" stroke="var(--blocked)" stroke-width="1.2" stroke-dasharray="4 3" opacity=".7"/>
+        <line x1="80" y1="75" x2="196" y2="75" stroke="var(--blocked)" stroke-width="1.4"/>
+        <circle cx="80" cy="75" r="5.5" fill="var(--blocked)"/>
+        <circle cx="196" cy="75" r="5.5" fill="var(--blocked)"/>
+        <text x="138" y="66" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--blocked)">500 m</text>
+      </svg>
+      <h3>500 m entre farmácias</h3>
+      <p>Nenhuma farmácia pode instalar-se a menos de 500 metros de outra. Vale também para farmácias do concelho vizinho.</p>
+      <p>Mede-se em linha reta entre os <strong>dois pontos mais próximos dos limites exteriores dos edifícios</strong> — não entre as portas.</p>
+      <p class="cite">DL 307/2007, art. 26.º n.º 2 b) e n.º 3<br>Portaria 352/2012, art. 2.º n.º 1 b)</p>
+    </article>
+
+    <article class="rulecard">
+      <span class="tag t-health">Regra 2</span>
+      <svg class="sw" viewBox="0 0 300 150" role="img" aria-label="Círculo de 100 metros à volta de um centro de saúde, cinco vezes menor que o de 500 metros">
+        <rect width="300" height="150" fill="none"/>
+        <circle cx="80" cy="75" r="58" fill="none" stroke="var(--hair)" stroke-width="1" stroke-dasharray="3 4"/>
+        <circle cx="80" cy="75" r="11.6" fill="var(--health)" opacity=".2"/>
+        <circle cx="80" cy="75" r="11.6" fill="none" stroke="var(--health)" stroke-width="1.2"/>
+        <line x1="80" y1="75" x2="196" y2="75" stroke="var(--health)" stroke-width="1.4" opacity=".45"/>
+        <rect x="76.5" y="71.5" width="7" height="7" fill="var(--health)"/>
+        <circle cx="196" cy="75" r="5.5" fill="var(--health)"/>
+        <text x="140" y="66" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="var(--health)">100 m</text>
+        <text x="140" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--muted)">a tracejado, os 500 m para comparar</text>
+      </svg>
+      <h3>100 m a unidades de saúde</h3>
+      <p>Distância mínima a um centro de saúde, extensão de saúde ou hospital. Dispensada em freguesias com menos de 4000 habitantes.</p>
+      <p>É cinco vezes menor que a regra anterior. Na prática, quase nunca é ela que bloqueia: em Marvila fechou <strong>menos de 1% do terreno</strong>.</p>
+      <p class="cite">Portaria 352/2012, art. 2.º n.º 1 c),<br>aplicável à transferência pelo n.º 2</p>
+    </article>
+
+    <article class="rulecard">
+      <span class="tag t-radius">Regra 3</span>
+      <svg class="sw" viewBox="0 0 300 150" role="img" aria-label="Farmácia isolada limitada a um raio de 750 metros">
+        <rect width="300" height="150" fill="none"/>
+        <circle cx="150" cy="75" r="60" fill="var(--radius)" opacity=".10"/>
+        <circle cx="150" cy="75" r="60" fill="none" stroke="var(--radius)" stroke-width="1.3" stroke-dasharray="5 4"/>
+        <circle cx="150" cy="75" r="6" fill="var(--radius)"/>
+        <text x="150" y="47" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="var(--radius)">750 m</text>
+        <text x="150" y="140" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--muted)">só se pode mexer dentro deste círculo</text>
+      </svg>
+      <h3>A coleira dos 750 m</h3>
+      <p>Só se pode pedir transferência se existir outra farmácia a menos de <strong>1000 m da localização atual</strong>.</p>
+      <p>Se não existir, a farmácia fica presa: só pode mudar-se para dentro de um raio de 750 m de onde está. Uma farmácia isolada não vai para lado nenhum.</p>
+      <p class="cite">DL 307/2007, art. 26.º n.º 2 a) e n.º 4</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="rule"><span class="lbl">O mapa</span></div>
+    <h2>Marvila, à escala real</h2>
+    <p>Cada ponto é uma farmácia verdadeira. À volta de cada uma, o círculo de 500 metros que ela projeta. Onde os círculos se sobrepõem, o terreno está fechado — e em Lisboa sobrepõem-se quase sempre.</p>
+    <p>O <strong>verde é o que sobra</strong>: os poucos intervalos onde uma farmácia pode legalmente instalar-se.</p>
+  </div>
+
+  <div class="mapwrap">
+    <svg id="mapa" viewBox="-1250 -1250 2500 2500" role="img"
+         aria-label="Mapa à escala de Marvila mostrando as áreas fechadas à transferência de farmácia pelos círculos de 500 metros das farmácias existentes"></svg>
+    <div class="maplegend">
+      <span><i style="background:var(--blocked);opacity:.42"></i>Fechado: farmácia a menos de 500 m</span>
+      <span><i style="background:var(--health);opacity:.5"></i>Fechado: unidade de saúde a menos de 100 m</span>
+      <span><i style="background:var(--free);opacity:.34"></i>Livre</span>
+    </div>
+    <p class="cap">Área representada: 2,5 km de lado, centrada na Farmácia Pontes Leite. Os círculos incluem as 65 farmácias num raio de 2,3 km, para que as bordas do mapa estejam corretas. Posições do OpenStreetMap.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="rule"><span class="lbl">O caso</span></div>
+    <h2>A Pontes Leite pode mexer-se</h2>
+    <p>A Farmácia Pontes Leite fica na Rua François Mitterrand, no Bairro do Armador. A Farmácia Bela Vista, na Avenida República da Bulgária, está a <strong>409 metros</strong> dela.</p>
+    <p>Esses 409 metros decidem duas coisas ao mesmo tempo, e em sentidos opostos.</p>
+  </div>
+
+  <div class="verdict">
+    <div class="vrow">
+      <span class="vmark v-ok">Livre</span>
+      <div>
+        <h3>Não está presa aos 750 metros</h3>
+        <p>Como existe uma farmácia a menos de 1000 m da localização atual, o requisito do artigo 26.º n.º 2 a) está cumprido. A Pontes Leite pode candidatar-se a qualquer ponto elegível do concelho de Lisboa, não apenas à sua vizinhança.</p>
+      </div>
+    </div>
+    <div class="vrow">
+      <span class="vmark v-no">Fechado</span>
+      <div>
+        <h3>Está ela própria abaixo do mínimo legal</h3>
+        <p>409 metros é menos de 500. É legal, porque a regra não é retroativa, mas significa que hoje está mais perto de uma concorrente do que a lei permitiria a quem chegasse agora. Tem três farmácias a menos de 700 m: Bela Vista a 409, Serejo a 562, Santo António a 693.</p>
+      </div>
+    </div>
+    <div class="vrow">
+      <span class="vmark v-na">Sem uso</span>
+      <div>
+        <h3>A porta de saída do artigo 26.º n.º 7 não serve</h3>
+        <p>Quem já está abaixo dos 500 m pode transferir-se sem cumprir essa distância, desde que não se aproxime das farmácias existentes no destino. Testámos toda a zona: sobram <b class="num">18</b> pontos em <b class="num">3472</b>, todos longe e sem movimento. Num tecido urbano denso é impossível afastar-se de todas ao mesmo tempo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="rule"><span class="lbl">O que ganha em mudar</span></div>
+    <h2>O sítio onde está é fraco</h2>
+    <p>Depois do filtro legal, a segunda pergunta é onde compensa. Medimos o movimento à volta de cada ponto livre: comércio e serviços a menos de 250 m, proximidade a unidades de saúde e folga em relação à concorrência.</p>
+  </div>
+
+  <div class="bars">
+    <div class="bar now">
+      <div class="top"><b>Onde está hoje</b><span class="n">21 / 100</span></div>
+      <div class="track"><i style="width:21%"></i></div>
+      <div class="sub">Encaixada entre três farmácias, num sítio com pouco comércio. A folga face à concorrência é zero: está abaixo do mínimo legal.</div>
+    </div>
+    <div class="bar">
+      <div class="top"><b>Melhor local dentro de 750 m</b><span class="n">41 / 100</span></div>
+      <div class="track"><i style="width:41%"></i></div>
+      <div class="sub">Junto à Azinhaga da Fonte do Louro. Quase o dobro, sem sair do bairro.</div>
+    </div>
+    <div class="bar">
+      <div class="top"><b>Melhor local do concelho analisado</b><span class="n">58 / 100</span></div>
+      <div class="track"><i style="width:58%"></i></div>
+      <div class="sub">Zona da Rua Pereira Henriques, no Poço do Bispo: 544 m da farmácia mais próxima e 197 m de uma unidade de saúde, com comércio à volta.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="rule"><span class="lbl">Antes de avançar</span></div>
+    <h2>O que este mapa não sabe</h2>
+  </div>
+  <div class="warn col">
+    <ul>
+      <li><b>Não é prova legal.</b> A lei mede entre limites exteriores de edifícios. Aqui mediu-se ponto a ponto, o que dá sempre um valor maior que o legal. A prova é a certidão camarária do artigo 20.º n.º 1 d) da Portaria.</li>
+      <li><b>Não vê os concorrentes que já se mexeram.</b> Um pedido de transferência de outra farmácia, aprovado e ainda não aberto, bloqueia o local pelo artigo 25.º. Só o Infarmed publica isso.</li>
+      <li><b>Falta o parecer da câmara.</b> É obrigatório e, se for desfavorável, não há transferência. Nenhum mapa o antecipa.</li>
+      <li><b>Há a carência de cinco anos</b> desde a abertura antes de se poder sequer requerer a transferência.</li>
+      <li><b>A capitação de 3500 habitantes não entra aqui.</b> É requisito para abrir farmácias novas, não para transferir. Confunde-se com frequência.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  Base legal: Decreto-Lei n.º 307/2007 de 31 de agosto, artigos 26.º e 26.º-A, na redação do Decreto-Lei n.º 58/2024 de 25 de setembro. Portaria n.º 352/2012 de 30 de outubro, artigo 2.º, na redação da Portaria n.º 375/2025/1 de 4 de novembro, em vigor desde 5 de novembro de 2025.<br>
+  Dados de localização: OpenStreetMap. Análise preliminar, não substitui certidão camarária nem decisão de aptidão do Infarmed.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  // Farmácias reais num raio de 2,3 km da Pontes Leite, em metros relativos a ela.
+  // Incluem-se as de fora do enquadramento para que os círculos cortem bem nas bordas.
+  var PH = [
+    ["Pontes Leite",0,0],["Bela Vista",226,-341],["Serejo",551,-112],["Santo António",624,300],
+    ["Marluz",-407,877],["Falcão",696,-681],["Marvila",887,414],["Sacramento",450,-970],
+    ["Gago Coutinho",-1003,-470],["Ibéria",-774,883],["Barros Gouveia",1256,-182],["Paes",-1061,728],
+    ["Garantia",-1302,282],["Almeida Vaz",-294,-1303],["Central do Areeiro",-1296,493],
+    ["Esperança",-1229,805],["Freitas",1494,-44],["",-846,1255],["",-1498,-295],["",-1549,337],
+    ["",-1541,375],["",-1176,1104],["",-1633,-27],["",-1625,-248],["",-1515,644],["",-478,-1578],
+    ["",-1071,1283],["",-1597,-503],["",-863,1472],["",-1333,1082],["",1720,106],["",-1696,370],
+    ["",-1728,211],["",-947,1470],["",-1042,1439],["",1144,1370],["",956,-1508],["",-1045,1453],
+    ["",-1144,1380],["",774,1642],["",-1167,1396],["",333,-1826],["",410,-1841],["",-1946,-207],
+    ["",-1359,1423],["",-1943,-318],["",-120,-1987],["",-1981,281],["",-1802,-1016],["",-1863,-951],
+    ["",-1659,-1354],["",-2163,-36],["",1884,-1084],["",-1997,-893],["",-2049,792],["",-2118,-621],
+    ["",-2199,265],["",238,-2235],["",-2062,-904],["",-2038,-957],["",-1355,1805],["",-2121,-841],
+    ["",-1715,-1511],["",-1693,1541],["",-185,-2290]
+  ];
+  var HU = [
+    ["USF de Marvila",749,369],["UCSP de Marvila",1470,-35],["UCSP da Alameda",-1092,998],
+    ["US Santa Casa",1336,737],["USF dos Lóios",-340,-1554],["CS do Beato",675,1546],
+    ["Hospital CUF Descobertas",1718,-1385],["CS CUF Alvalade",-2123,-798]
+  ];
+
+  var svg = document.getElementById('mapa');
+  if(!svg) return;
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(n,a){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); return e; }
+  function circles(arr,r,fill){
+    var g = el('g',{fill:fill});
+    arr.forEach(function(p){ g.appendChild(el('circle',{cx:p[1],cy:p[2],r:r})); });
+    return g;
+  }
+
+  // Máscara: branco = tudo, preto = o que está fechado. Sobra exatamente a área livre.
+  var defs = el('defs',{});
+  var mask = el('mask',{id:'livre'});
+  mask.appendChild(el('rect',{x:-1250,y:-1250,width:2500,height:2500,fill:'#fff'}));
+  mask.appendChild(circles(PH,500,'#000'));
+  mask.appendChild(circles(HU,100,'#000'));
+  defs.appendChild(mask);
+  svg.appendChild(defs);
+
+  // 1. o que sobra, a verde
+  svg.appendChild(el('rect',{x:-1250,y:-1250,width:2500,height:2500,
+    fill:'var(--free)','fill-opacity':.34,mask:'url(#livre)'}));
+  // 2. o que está fechado, achatado por opacidade de grupo para não escurecer nas sobreposições
+  var blocked = circles(PH,500,'var(--blocked)'); blocked.setAttribute('opacity',.42); svg.appendChild(blocked);
+  var health  = circles(HU,100,'var(--health)');  health.setAttribute('opacity',.5);  svg.appendChild(health);
+
+  // 3. marcadores
+  var dots = el('g',{});
+  PH.forEach(function(p){
+    var origem = p[0]==='Pontes Leite';
+    dots.appendChild(el('circle',{cx:p[1],cy:p[2],r:origem?26:16,
+      fill:origem?'var(--ink)':'var(--blocked)',stroke:'var(--card)','stroke-width':origem?9:6}));
+  });
+  HU.forEach(function(h){
+    dots.appendChild(el('rect',{x:h[1]-15,y:h[2]-15,width:30,height:30,
+      fill:'var(--health)',stroke:'var(--card)','stroke-width':6}));
+  });
+  svg.appendChild(dots);
+
+  // 4. nomes só das mais próximas, para o mapa não ficar ilegível
+  var labels = el('g',{'font-family':'IBM Plex Mono, monospace','font-size':46,fill:'var(--ink)'});
+  PH.forEach(function(p){
+    if(!p[0]) return;
+    var d = Math.sqrt(p[1]*p[1]+p[2]*p[2]);
+    if(d > 1150) return;
+    var origem = p[0]==='Pontes Leite';
+    var t = el('text',{x:p[1],y:p[2]-(origem?46:38),'text-anchor':'middle',
+      'font-size':origem?58:44,'font-weight':origem?600:400,
+      stroke:'var(--card)','stroke-width':7,'paint-order':'stroke'});
+    t.textContent = p[0];
+    labels.appendChild(t);
+  });
+  var u = el('text',{x:HU[0][1],y:HU[0][2]+68,'text-anchor':'middle','font-size':42,
+    fill:'var(--health)',stroke:'var(--card)','stroke-width':7,'paint-order':'stroke'});
+  u.textContent = 'USF de Marvila';
+  labels.appendChild(u);
+  svg.appendChild(labels);
+
+  // 5. escala
+  var sc = el('g',{});
+  sc.appendChild(el('line',{x1:-1160,y1:1150,x2:-660,y2:1150,stroke:'var(--ink)','stroke-width':9}));
+  sc.appendChild(el('line',{x1:-1160,y1:1120,x2:-1160,y2:1180,stroke:'var(--ink)','stroke-width':9}));
+  sc.appendChild(el('line',{x1:-660,y1:1120,x2:-660,y2:1180,stroke:'var(--ink)','stroke-width':9}));
+  var st = el('text',{x:-910,y:1100,'text-anchor':'middle','font-family':'IBM Plex Mono, monospace',
+    'font-size':46,'font-weight':600,fill:'var(--ink)'});
+  st.textContent = '500 m';
+  sc.appendChild(st);
+  svg.appendChild(sc);
+})();
+</script>

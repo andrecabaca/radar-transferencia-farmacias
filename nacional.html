@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa Nacional — Transferência de Farmácias</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --bg:#0f172a; --bg2:#1e293b; --line:#334155; --txt:#e2e8f0; --dim:#94a3b8;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --acc:#38bdf8; --sidebar:400px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+  #app{display:flex;height:100%}
+  #side{width:var(--sidebar);min-width:var(--sidebar);height:100%;overflow-y:auto;background:var(--bg);border-right:1px solid var(--line)}
+  #map{flex:1;height:100%;background:#0b1220}
+  .hd{padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:600}
+  .hd h1{font-size:15px;margin:0;letter-spacing:.2px}
+  .hd p{margin:4px 0 0;font-size:11px;color:var(--dim);line-height:1.5}
+  .hd a{color:var(--acc);text-decoration:none}
+  .hd a:hover{text-decoration:underline}
+  section{border-bottom:1px solid var(--line);padding:14px 16px}
+  section>h2{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--dim);margin:0 0 10px;font-weight:600}
+  input[type=text]{width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:6px;color:var(--txt);font-size:13px;font-family:inherit}
+  input[type=text]:focus{outline:none;border-color:var(--acc)}
+  button{width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:6px;color:var(--txt);font-size:12.5px;cursor:pointer;font-family:inherit;margin-top:8px;text-align:left}
+  button:hover{background:#243349;border-color:#475569}
+  button.primary{background:#0369a1;border-color:#0284c7;color:#f0f9ff;font-weight:600;text-align:center}
+  button.primary:hover{background:#0284c7}
+  .metrics{display:flex;flex-direction:column;gap:6px}
+  .metrics label{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:7px;cursor:pointer;background:var(--bg2)}
+  .metrics label:has(input:checked){border-color:var(--acc);background:rgba(56,189,248,.10)}
+  .metrics input{margin:2px 0 0;accent-color:var(--acc);flex:none}
+  .metrics b{display:block;font-size:12.5px;font-weight:600}
+  .metrics small{display:block;font-size:11px;color:var(--dim);margin-top:2px;line-height:1.45}
+  .totais{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .tot{background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:11px 12px}
+  .tot b{display:block;font-size:21px;font-variant-numeric:tabular-nums;line-height:1.1}
+  .tot span{display:block;font-size:11px;color:var(--dim);margin-top:4px;line-height:1.35}
+  .note{font-size:11px;color:var(--dim);line-height:1.55;margin:10px 0 0}
+  .scale{display:flex;height:11px;border-radius:3px;overflow:hidden;margin:10px 0 5px}
+  .scale i{flex:1}
+  .scaletxt{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .rank{display:flex;flex-direction:column;gap:1px}
+  .rk{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:5px;cursor:pointer;font-size:12.5px}
+  .rk:hover{background:var(--bg2)}
+  .rk .p{font-size:10.5px;color:var(--dim);width:17px;text-align:right;flex:none;font-variant-numeric:tabular-nums}
+  .rk .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rk .v{font-variant-numeric:tabular-nums;font-weight:600;flex:none;font-size:12px}
+  .rk .sw{width:4px;height:19px;border-radius:2px;flex:none}
+  #det .big{font-size:17px;font-weight:600;margin:0 0 3px}
+  #det .sub{font-size:11.5px;color:var(--dim);margin:0 0 13px}
+  .kv{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12.5px;padding:7px 0;border-bottom:1px solid rgba(51,65,85,.55)}
+  .kv:last-of-type{border-bottom:none}
+  .kv span{color:var(--dim);flex:1}
+  .kv b{font-variant-numeric:tabular-nums;flex:none}
+  .pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;margin:0 0 11px}
+  .p-ok{background:rgba(34,197,94,.18);color:#86efac}
+  .p-no{background:rgba(148,163,184,.16);color:#cbd5e1}
+  .p-warn{background:rgba(245,158,11,.18);color:#fcd34d}
+  .bar{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;margin:5px 0 12px}
+  .bar i{display:block;height:100%}
+  .leaflet-container{background:#0b1220}
+  .lgt{background:rgba(15,23,42,.94);color:#e2e8f0;border:1px solid #334155;border-radius:5px;padding:4px 8px;font-size:11.5px;font-weight:600;box-shadow:none}
+  .lgt:before{display:none}
+  .cov{font-size:11px;line-height:1.5;padding:9px 11px;border-radius:6px;margin:12px 0 0;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);color:#fcd34d}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <div class="hd">
+      <h1>Portugal, concelho a concelho</h1>
+      <p>Onde há espaço para transferir farmácias. <a href="index.html">Abrir a análise ao metro &rarr;</a></p>
+    </div>
+
+    <section>
+      <h2>Retrato nacional</h2>
+      <div class="totais" id="totais"></div>
+      <p class="note" id="totnota"></p>
+    </section>
+
+    <section>
+      <h2>Colorir o mapa por</h2>
+      <div class="metrics" id="metricas"></div>
+      <div class="scale" id="escala"></div>
+      <div class="scaletxt" id="escalatxt"></div>
+    </section>
+
+    <section>
+      <h2>Procurar concelho</h2>
+      <input type="text" id="q" placeholder="Escreva o nome do concelho" autocomplete="off">
+      <div class="rank" id="sug" style="margin-top:8px"></div>
+    </section>
+
+    <section id="detwrap" style="display:none">
+      <h2>Concelho selecionado</h2>
+      <div id="det"></div>
+    </section>
+
+    <section>
+      <h2 id="rktit">Ranking</h2>
+      <div class="rank" id="rank"></div>
+    </section>
+
+    <section>
+      <h2>Dados</h2>
+      <button id="btnCsv">Descarregar tabela completa em CSV</button>
+      <p class="note">Limites e população dos concelhos: OpenStreetMap. Número oficial de farmácias: INE, Estatísticas das Farmácias 2025. Localização das farmácias: OpenStreetMap, com as lacunas assinaladas concelho a concelho.</p>
+    </section>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+
+const map = L.map('map',{preferCanvas:true}).setView([39.6,-8.2], 7);
+// Basemap escuro sem chave de API. O CARTO passou a exigir chave e as telhas
+// vinham carimbadas com "API KEY REQUIRED" por cima do mapa.
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
+  maxZoom:16, attribution:'&copy; Esri, &copy; OpenStreetMap'
+}).addTo(map);
+const gConc = L.layerGroup().addTo(map);
+const gPh   = L.layerGroup();
+
+let CONC=[], PH=[], layers=new Map(), sel=null;
+
+/* ---------- métricas ---------- */
+// Cada métrica diz como se lê um concelho e com que rampa de cor.
+const METRICAS = {
+  livres:{
+    nome:'Farmácias que podem mudar-se',
+    desc:'Percentagem das farmácias do concelho que têm outra a menos de 1000 m e por isso não estão presas ao raio de 750 m.',
+    val:c=>c.f? 100*c.livres/c.f : null,
+    fmt:v=>Math.round(v)+'%', lo:0, hi:100,
+    ramp:['#7f1d1d','#b45309','#ca8a04','#4d7c0f','#22c55e']
+  },
+  cap:{
+    nome:'Capitação',
+    desc:'Habitantes por farmácia, com o número oficial do INE. Acima de 3500 há margem para mais uma farmácia.',
+    val:c=>c.cap, fmt:v=>Math.round(v).toLocaleString('pt-PT'), lo:1000, hi:6000,
+    ramp:['#7f1d1d','#b45309','#0e7490','#0284c7','#38bdf8']
+  },
+  abrir:{
+    nome:'Pode abrir farmácia nova',
+    desc:'Concelhos onde, mesmo depois de instalada mais uma farmácia, a capitação continua igual ou acima de 3500 habitantes.',
+    val:c=>c.abrir?1:0, fmt:v=>v?'Sim':'Não', lo:0, hi:1, binaria:true,
+    ramp:['#334155','#334155','#166534','#16a34a','#22c55e']
+  },
+  sub500:{
+    nome:'Saturação da rede',
+    desc:'Percentagem de farmácias já a menos de 500 m de outra. Valores altos indicam uma rede apertada, com poucos espaços livres.',
+    val:c=>c.f? 100*c.sub500/c.f : null,
+    fmt:v=>Math.round(v)+'%', lo:0, hi:100,
+    ramp:['#22c55e','#4d7c0f','#ca8a04','#b45309','#7f1d1d']
+  },
+  dmed:{
+    nome:'Distância entre vizinhas',
+    desc:'Mediana da distância de cada farmácia à mais próxima. Abaixo de 500 m significa uma rede já mais apertada do que a lei hoje permitiria.',
+    val:c=>c.dmed, fmt:v=>v>=1000?(v/1000).toFixed(1)+' km':Math.round(v)+' m', lo:100, hi:2000,
+    ramp:['#7f1d1d','#b45309','#ca8a04','#4d7c0f','#22c55e']
+  }
+};
+let metrica = 'livres';
+
+function hex2rgb(h){ return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]; }
+function ramp(t, stops){
+  t = Math.max(0, Math.min(1, t));
+  const n = stops.length - 1, i = Math.min(n-1, Math.floor(t*n)), f = t*n - i;
+  const a = hex2rgb(stops[i]), b = hex2rgb(stops[i+1]);
+  return 'rgb('+a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',')+')';
+}
+function corDe(c){
+  const M = METRICAS[metrica], v = M.val(c);
+  if(v===null||v===undefined) return '#1e293b';
+  return ramp((v-M.lo)/(M.hi-M.lo), M.ramp);
+}
+
+/* ---------- desenho ---------- */
+function pinta(){
+  const M = METRICAS[metrica];
+  layers.forEach((ly,nome)=>{
+    const c = ly._c;
+    ly.setStyle({fillColor:corDe(c), fillOpacity:.72, color:'#0b1220', weight:.8});
+  });
+  if(sel) destaca(sel);
+  document.getElementById('escala').innerHTML =
+    Array.from({length:28},(_,i)=>'<i style="background:'+ramp(i/27,M.ramp)+'"></i>').join('');
+  document.getElementById('escalatxt').innerHTML = M.binaria
+    ? '<span>Não</span><span>Sim</span>'
+    : '<span>'+M.fmt(M.lo)+'</span><span>'+M.fmt(M.hi)+'</span>';
+  ranking();
+}
+function destaca(c){
+  const ly = layers.get(c.n);
+  if(ly) ly.setStyle({color:'#38bdf8', weight:2.4}).bringToFront();
+}
+
+function desenha(){
+  CONC.forEach(c=>{
+    const poly = L.polygon(c.g.map(r=>r.map(p=>[p[0],p[1]])), {
+      fillColor:corDe(c), fillOpacity:.72, color:'#0b1220', weight:.8
+    });
+    poly._c = c;
+    poly.bindTooltip(()=> {
+      const M = METRICAS[metrica], v = M.val(c);
+      return '<b>'+c.n+'</b><br>'+M.nome+': '+(v===null?'sem dados':M.fmt(v));
+    },{className:'lgt',sticky:true});
+    poly.on('click',()=>seleciona(c));
+    poly.on('mouseover',()=>{ if(sel!==c) poly.setStyle({weight:1.8,color:'#7dd3fc'}); });
+    poly.on('mouseout', ()=>{ if(sel!==c) poly.setStyle({weight:.8,color:'#0b1220'}); });
+    poly.addTo(gConc);
+    layers.set(c.n, poly);
+  });
+}
+
+/* ---------- seleção ---------- */
+function seleciona(c, voar){
+  if(sel){ const p=layers.get(sel.n); if(p) p.setStyle({weight:.8,color:'#0b1220'}); }
+  sel = c; destaca(c);
+  if(voar!==false){ const ly=layers.get(c.n); if(ly) map.fitBounds(ly.getBounds(),{padding:[40,40]}); }
+
+  gPh.clearLayers();
+  PH.filter(p=>p.c===c.n).forEach(p=>{
+    const apertada = p.d!==null && p.d<500;
+    L.circleMarker([p.y,p.x],{radius:4.5,weight:1.6,
+      color: apertada?'#f87171':'#38bdf8', fillColor: apertada?'#ef4444':'#0ea5e9', fillOpacity:.9})
+      .bindTooltip((p.n||'Farmácia')+(p.d!==null?'<br>vizinha a '+Math.round(p.d)+' m':''),{className:'lgt'})
+      .addTo(gPh);
+  });
+  gPh.addTo(map);
+
+  const pctL = c.f? Math.round(100*c.livres/c.f) : null;
+  const pctS = c.f? Math.round(100*c.sub500/c.f) : null;
+  document.getElementById('detwrap').style.display='';
+  document.getElementById('det').innerHTML =
+    '<p class="big">'+esc(c.n)+'</p>'+
+    '<p class="sub">'+c.pop.toLocaleString('pt-PT')+' habitantes &middot; '+c.fine+' farmácias licenciadas</p>'+
+    (c.abrir
+      ? '<span class="pill p-ok">HÁ MARGEM PARA MAIS UMA FARMÁCIA</span>'
+      : '<span class="pill p-no">SEM MARGEM PARA NOVAS FARMÁCIAS</span>')+
+    '<div class="kv"><span>Capitação</span><b>'+(c.cap?c.cap.toLocaleString('pt-PT')+' hab.':'—')+'</b></div>'+
+    '<div class="kv"><span>Farmácias localizadas no mapa</span><b>'+c.f+' de '+c.fine+'</b></div>'+
+    (pctL!==null
+      ? '<div class="kv"><span>Podem mudar-se para qualquer sítio do concelho</span><b>'+c.livres+' de '+c.f+'</b></div>'+
+        '<div class="bar"><i style="width:'+pctL+'%;background:#22c55e"></i></div>'+
+        '<div class="kv"><span>Presas ao raio de 750 m</span><b>'+c.presas+'</b></div>'+
+        '<div class="kv"><span>Já a menos de 500 m de outra</span><b>'+c.sub500+' ('+pctS+'%)</b></div>'+
+        '<div class="kv"><span>Distância mediana à vizinha</span><b>'+(c.dmed!==null?(c.dmed>=1000?(c.dmed/1000).toFixed(1)+' km':c.dmed+' m'):'—')+'</b></div>'
+      : '<p class="note">Nenhuma farmácia deste concelho está localizada no OpenStreetMap, por isso não há análise geométrica.</p>')+
+    '<div class="kv"><span>Unidades de saúde relevantes</span><b>'+c.hu+'</b></div>'+
+    (c.cob!==null && c.cob<70
+      ? '<div class="cov">Só '+c.cob+'% das farmácias deste concelho estão no OpenStreetMap. As contas de distâncias acima são pouco fiáveis — acrescente as que faltam na análise ao metro antes de decidir.</div>'
+      : '')+
+    '<button class="primary" id="btnZoom">Analisar este concelho ao metro</button>';
+
+  document.getElementById('btnZoom').onclick = ()=>{
+    location.href = 'index.html#'+c.c[0].toFixed(5)+','+c.c[1].toFixed(5)+',14';
+  };
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+/* ---------- ranking ---------- */
+// Um ranking por percentagem produz dezenas de empates a 100% ordenados por acaso.
+// Cada métrica tem por isso o seu próprio critério, um mínimo de dimensão, e o valor
+// que faz sentido mostrar ao lado do nome.
+const RANKINGS = {
+  livres:{ titulo:'Onde há mais farmácias que podem mudar-se', min:0,
+           ord:(a,b)=>b.livres-a.livres, mostra:c=>c.livres+' de '+c.f },
+  cap:{    titulo:'Maior capitação, mais espaço', min:2,
+           ord:(a,b)=>b.cap-a.cap, mostra:c=>c.cap.toLocaleString('pt-PT') },
+  abrir:{  titulo:'Concelhos onde pode abrir farmácia nova', min:0, filtra:c=>c.abrir,
+           ord:(a,b)=>b.cap-a.cap, mostra:c=>c.cap.toLocaleString('pt-PT')+' hab.' },
+  sub500:{ titulo:'Redes mais saturadas', min:5,
+           ord:(a,b)=>(b.sub500/b.f)-(a.sub500/a.f) || b.sub500-a.sub500,
+           mostra:c=>Math.round(100*c.sub500/c.f)+'% ('+c.sub500+')' },
+  dmed:{   titulo:'Farmácias mais próximas umas das outras', min:5,
+           ord:(a,b)=>a.dmed-b.dmed, mostra:c=>c.dmed+' m' }
+};
+
+function ranking(){
+  const M = METRICAS[metrica], R = RANKINGS[metrica];
+  let lst = CONC.filter(c=>M.val(c)!==null && M.val(c)!==undefined && c.fine>=R.min && c.f>0);
+  if(R.filtra) lst = lst.filter(R.filtra);
+  lst = lst.slice().sort(R.ord).slice(0,18);
+  document.getElementById('rktit').textContent = R.titulo;
+  document.getElementById('rank').innerHTML = lst.map((c,i)=>
+    '<div class="rk" data-n="'+esc(c.n)+'"><span class="p">'+(i+1)+'</span>'+
+    '<span class="sw" style="background:'+corDe(c)+'"></span>'+
+    '<span class="nm">'+esc(c.n)+'</span><span class="v">'+R.mostra(c)+'</span></div>').join('');
+  document.querySelectorAll('#rank .rk').forEach(el=>el.onclick=()=>{
+    const c = CONC.find(x=>x.n===el.dataset.n); if(c) seleciona(c);
+  });
+}
+
+/* ---------- pesquisa ---------- */
+function semAcento(s){ return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+document.getElementById('q').addEventListener('input', e=>{
+  const q = semAcento(e.target.value.trim());
+  const box = document.getElementById('sug');
+  if(q.length<2){ box.innerHTML=''; return; }
+  const hits = CONC.filter(c=>semAcento(c.n).includes(q)).slice(0,7);
+  box.innerHTML = hits.map(c=>'<div class="rk" data-n="'+esc(c.n)+'">'+
+    '<span class="sw" style="background:'+corDe(c)+'"></span><span class="nm">'+esc(c.n)+'</span>'+
+    '<span class="v">'+c.fine+' farm.</span></div>').join('');
+  box.querySelectorAll('.rk').forEach(el=>el.onclick=()=>{
+    const c = CONC.find(x=>x.n===el.dataset.n);
+    if(c){ seleciona(c); document.getElementById('q').value=''; box.innerHTML=''; }
+  });
+});
+
+/* ---------- CSV ---------- */
+document.getElementById('btnCsv').onclick = ()=>{
+  const cab = ['Concelho','Habitantes','Farmacias_INE','Farmacias_no_mapa','Cobertura_pct',
+               'Capitacao','Pode_abrir','Podem_mudar_se','Presas','Abaixo_500m',
+               'Distancia_mediana_vizinha_m','Unidades_saude'];
+  const linhas = CONC.map(c=>[c.n,c.pop,c.fine,c.f,c.cob??'',c.cap??'',c.abrir?'Sim':'Nao',
+    c.livres,c.presas,c.sub500,c.dmed??'',c.hu]);
+  const csv = '﻿'+[cab].concat(linhas)
+    .map(r=>r.map(v=>/[;"\n]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = 'concelhos-transferencia-farmacias.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+};
+
+/* ---------- arranque ---------- */
+document.getElementById('metricas').innerHTML = Object.entries(METRICAS).map(([k,M])=>
+  '<label><input type="radio" name="mt" value="'+k+'"'+(k===metrica?' checked':'')+'>'+
+  '<span><b>'+M.nome+'</b><small>'+M.desc+'</small></span></label>').join('');
+document.querySelectorAll('input[name=mt]').forEach(r=>r.onchange=e=>{ metrica=e.target.value; pinta(); });
+
+Promise.all([
+  fetch('dados/concelhos.json').then(r=>r.json()),
+  fetch('dados/farmacias.json').then(r=>r.json())
+]).then(([d,ph])=>{
+  CONC = d.concelhos; PH = ph;
+  const t = d.totais;
+  const pctL = Math.round(100*t.livres/t.farmacias);
+  const pctS = Math.round(100*t.sub500/t.farmacias);
+  const podeAbrir = CONC.filter(c=>c.abrir).length;
+  document.getElementById('totais').innerHTML =
+    '<div class="tot"><b>'+t.farmacias_ine.toLocaleString('pt-PT')+'</b><span>farmácias licenciadas no país</span></div>'+
+    '<div class="tot"><b style="color:#86efac">'+pctL+'%</b><span>podem mudar-se para qualquer sítio do seu concelho</span></div>'+
+    '<div class="tot"><b style="color:#fca5a5">'+pctS+'%</b><span>já estão a menos de 500 m de outra farmácia</span></div>'+
+    '<div class="tot"><b style="color:#7dd3fc">'+podeAbrir+'</b><span>concelhos com margem para uma farmácia nova</span></div>';
+  document.getElementById('totnota').innerHTML =
+    'As percentagens são calculadas sobre as '+t.farmacias.toLocaleString('pt-PT')+
+    ' farmácias que estão localizadas no OpenStreetMap, ou seja '+
+    Math.round(100*t.farmacias/t.farmacias_ine)+'% do total licenciado. '+
+    'Os concelhos com pior cobertura estão assinalados quando os seleciona.';
+  desenha(); pinta();
+  const h = decodeURIComponent(location.hash.slice(1));
+  if(h){ const c = CONC.find(x=>x.n===h); if(c) seleciona(c); }
+}).catch(e=>{
+  document.getElementById('totais').innerHTML =
+    '<p class="note" style="color:#fca5a5">Não foi possível carregar os dados nacionais ('+e.message+
+    '). Abra a aplicação através do ficheiro <b>Abrir Radar.bat</b>, não com duplo clique no HTML.</p>';
+});
+</script>
+</body>
+</html>
