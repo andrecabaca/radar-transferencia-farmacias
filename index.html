@@ -116,6 +116,26 @@
     background:rgba(56,189,248,.12);box-shadow:0 0 0 1px rgba(56,189,248,.22)}
   .camadas input{margin:0;accent-color:var(--acc);width:14px;height:14px;flex:none}
 
+  /* ---- quadro dos concelhos vizinhos ---- */
+  .viz{width:100%;border-collapse:collapse;margin:10px 0 2px;font-size:11.5px}
+  .viz th{text-align:right;font-weight:600;color:var(--dim2);font-size:10px;
+    text-transform:uppercase;letter-spacing:.4px;padding:0 0 6px;white-space:nowrap;
+    border-bottom:1px solid var(--line)}
+  .viz th:nth-child(2),.viz td:nth-child(2){padding-left:10px}
+  .viz th:first-child{text-align:left}
+  .viz td{padding:7px 0;border-bottom:1px solid var(--line);text-align:right;
+    font-variant-numeric:tabular-nums;color:var(--dim)}
+  .viz td:first-child{text-align:left;color:var(--txt)}
+  .viz tr:last-child td{border-bottom:none}
+  .viz tr.orig td{background:rgba(56,189,248,.07);color:var(--txt)}
+  .viz tr.alvo{cursor:pointer}
+  .viz tr.alvo:hover td{background:var(--panel2)}
+  .viz tr.sel td{background:rgba(56,189,248,.14);color:var(--txt)}
+  .viz .no{color:var(--dim2)}
+  .viz .sim{color:#6ee7b7;font-weight:600}
+  .viz .nao{color:var(--dim2)}
+  .viz .cap{font-weight:600;color:var(--txt)}
+
   /* ---- legenda ---- */
   .legend{font-size:11.5px;color:var(--dim);line-height:1.85;margin-top:10px;
     border-top:1px solid var(--line);padding-top:10px}
@@ -273,6 +293,7 @@
       do concelho para onde vai.</p>
       <label for="cOrig">Concelho de origem</label>
       <select id="cOrig"></select>
+      <div id="limTabela"></div>
       <label for="cDest">Concelho de destino</label>
       <select id="cDest"></select>
       <div id="limVerdict" class="verdict v-idle">Escolha os dois concelhos.</div>
@@ -1076,9 +1097,58 @@ function conc(nome){
   return NAC.cap ? NAC.cap.concelhos.find(c=>c.n===nome) : null;
 }
 
+// Escolher o destino um a um, e testar sete vezes, e' trabalho que o computador faz
+// melhor. Com a origem escolhida, o quadro mostra de uma vez a capitacao de todos os
+// concelhos que confinam com ela e quais e' que podem receber a farmacia.
+function renderVizinhos(){
+  const box = document.getElementById('limTabela');
+  const o = conc(document.getElementById('cOrig').value);
+  if(!o){ box.innerHTML = ''; return; }
+  const EX = NAC.cap.capitacaoExigivel, sel = document.getElementById('cDest').value;
+  const num = n => n==null ? '—' : n.toLocaleString('pt-PT');
+
+  // A origem so' pode exportar se estiver acima da conta em farmacias e se aguentar
+  // perder uma. As duas coisas juntas explicam metade dos nao.
+  const podeSair = o.cap!=null && o.cap < EX && o.capSaida!=null && o.capSaida <= EX;
+  const porque = o.cap==null ? 'sem farmácias registadas'
+    : o.cap >= EX ? 'capitação já acima dos '+num(EX)+': não tem farmácias a mais'
+    : o.capSaida==null ? 'só tem uma farmácia'
+    : o.capSaida > EX ? 'perder uma farmácia levava-o a '+num(o.capSaida)
+    : 'pode exportar uma farmácia';
+
+  const linhas = o.lim.map(n=>conc(n)).filter(Boolean)
+    .sort((a,b)=>(b.cap||0)-(a.cap||0))
+    .map(c=>{
+      const serve = c.cap!=null && c.cap > EX;
+      return '<tr class="alvo'+(c.n===sel?' sel':'')+'" data-c="'+esc(c.n)+'">'+
+        '<td>'+esc(c.n)+'</td>'+
+        '<td class="cap">'+num(c.cap)+'</td>'+
+        '<td>'+num(c.f)+'</td>'+
+        '<td class="'+(serve?'sim':'nao')+'">'+(serve?'pode receber':'não')+'</td></tr>';
+    }).join('');
+
+  box.innerHTML =
+    '<table class="viz"><thead><tr><th>Concelho</th><th title="Habitantes por farmácia">Hab./farm.</th>'+
+    '<th>N.º</th><th>Destino</th></tr></thead><tbody>'+
+    '<tr class="orig"><td><b>'+esc(o.n)+'</b> (origem)</td>'+
+    '<td class="cap">'+num(o.cap)+(o.capSaida!=null?' &rarr; '+num(o.capSaida):'')+'</td>'+
+    '<td>'+num(o.f)+'</td>'+
+    '<td class="'+(podeSair?'sim':'nao')+'">'+(podeSair?'pode sair':'não')+'</td></tr>'+
+    linhas + '</tbody></table>'+
+    '<p class="note">'+esc(o.n)+': '+porque+'. A seta mostra a capitação depois de sair '+
+    'uma farmácia. Um destino serve quando tem mais de '+num(EX)+' habitantes por '+
+    'farmácia. Clique numa linha para a escolher.</p>';
+
+  box.querySelectorAll('tr.alvo').forEach(tr=>tr.onclick=()=>{
+    document.getElementById('cDest').value = tr.dataset.c;
+    renderLim();
+  });
+}
+
 function renderLim(){
   const vd = document.getElementById('limVerdict'), ck = document.getElementById('limChecks');
   if(!NAC.cap){ vd.textContent = 'Dados de capitação não carregados.'; return; }
+  renderVizinhos();
   const EX = NAC.cap.capitacaoExigivel;
   const o = conc(document.getElementById('cOrig').value);
   const d = conc(document.getElementById('cDest').value);

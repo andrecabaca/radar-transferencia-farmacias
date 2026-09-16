@@ -100,8 +100,14 @@ Um separador só para isto, porque é um teste diferente do resto: não se joga 
 metros, joga-se em **capitação** — habitantes por farmácia, contra os 3500
 exigidos para abrir farmácia nova.
 
-Escolha o concelho de origem. A lista de destinos passa a mostrar **só os
-concelhos que confinam com ele** — Beja mostra sete, Alvito mostra quatro — porque
+Escolha o concelho de origem e aparece um quadro com **ela e todos os concelhos
+que confinam com ela**, ordenados pela capitação: habitantes por farmácia, quantas
+farmácias tem cada um, e quais podem receber. A linha da origem mostra a capitação
+antes e depois de sair uma farmácia, e diz se o concelho pode sequer exportar. Uma
+resposta de conjunto, em vez de sete testes um a um. Clique numa linha para a
+escolher como destino.
+
+A lista de destinos mostra **só os concelhos que confinam com a origem** — Beja mostra sete, Alvito mostra quatro — porque
 o artigo 26.º-A não admite mais nada. Se já marcou a farmácia a transferir e o
 ponto de destino no mapa, os campos preenchem-se sozinhos; e se o ponto testado
 cair num concelho que não confina com a origem, o painel di-lo em vez de o deixar
