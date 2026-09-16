@@ -2,8 +2,7 @@
 
 Ferramenta de mapa para pré-selecionar locais de transferência de farmácia:
 mostra onde a transferência está **legalmente bloqueada** pelas regras de
-distância do Infarmed e, dentro do que sobra, onde o local é **comercialmente
-mais interessante**.
+distância do Infarmed, e o que sobra.
 
 São duas vistas do mesmo problema:
 
@@ -125,10 +124,6 @@ restantes são geocodificadas pela morada: aparecem no mapa **a tracejado**, com
 morada no tooltip, e o veredicto avisa que ali a distância tem de ser confirmada
 em planta. Uma posição aproximada pode estar dezenas de metros ao lado.
 
-O botão passou a servir só para o **comércio e serviços**, que alimentam o índice
-de atratividade. Esses são milhões de pontos, não cabem num ficheiro do país, e só
-fazem falta quando já escolheu a zona.
-
 Abaixo do nível de zoom 12 o radar não avalia: 500 m valem aí menos de sete pixels,
 e um mapa quase todo verde seria mentira. Para a vista de longe existe o mapa
 nacional.
@@ -162,15 +157,20 @@ superior direito esconde-o e dá o ecrã todo ao mapa.
    possível testar o requisito do artigo 26.º n.º 2 a) nem o raio de 750 m.
 3. **Ler o mapa** — vermelho é o que a lei fecha, e a cor diz qual a regra que o
    fecha; âmbar está dentro da margem de erro; o que fica destapado é onde pode
-   ir. O resumo diz-lhe que percentagem da área visível está fechada e porquê.
-   No modo *Onde compensa*, o verde acende consoante o movimento à volta.
+   ir. O resumo diz-lhe que percentagem da área visível está fechada, porquê, e
+   de quantos proprietários são as farmácias que a fecham.
 4. **Testar um local** — clique num ponto para ver o veredicto requisito a
-   requisito, com o índice de atratividade repartido.
+   requisito.
 5. **Candidatos** — guarde os que interessam e descarregue o relatório
    comparativo em Markdown.
-6. **Afinar** — margem de segurança, dispensa dos 100 m, camadas do mapa,
-   carregamento do comércio e correções manuais. Mexe-se pouco e por isso está
-   no fim.
+6. **Afinar** — margem de segurança, dispensa dos 100 m, camadas do mapa e
+   correções manuais. Mexe-se pouco e por isso está no fim.
+
+A ferramenta responde a uma pergunta só: onde é que a lei deixa. Havia antes um
+índice de atratividade comercial, que contava lojas e cafés do OpenStreetMap à
+volta de cada ponto. Saiu: contar montras não substitui conhecer o negócio, e o
+número dava ao palpite um ar de medição que ele não tem. Com ele saiu também o
+carregamento de comércio, que era a última coisa que obrigava a esperar.
 
 O estado fica guardado no navegador. Fechar e reabrir mantém origem, candidatos,
 parâmetros e pontos acrescentados à mão.
@@ -207,19 +207,6 @@ para um otimismo perigoso.
 aparece verde se estiver a 500 m + margem. A faixa âmbar é a zona onde o
 resultado depende da geometria concreta dos edifícios e tem de ser medida em
 planta.
-
-## Índice de atratividade (0-100)
-
-Não tem valor legal. É uma heurística para ordenar os locais que já passaram no
-filtro legal.
-
-- **Comércio e serviços em 250 m — 50 pontos.** Pontos do OSM ponderados por
-  capacidade de gerar tráfego a pé (supermercado 3, banco e correios 2, café 1,
-  escritório 0,5) e com peso decrescente com a distância.
-- **Proximidade a unidades de saúde — 30 pontos.** Máximo entre os 100 m e os
-  350 m, a decair até zero aos 1200 m. Abaixo dos 100 m o local está bloqueado.
-- **Folga face à concorrência — 20 pontos.** Cresce dos 500 m aos 1500 m da
-  farmácia mais próxima. Um local a 510 m é legal mas fica colado à concorrência.
 
 ## O que isto não faz
 

@@ -101,12 +101,6 @@
   .d-na{background:#46587a}
   .check b{display:block;font-weight:650;color:var(--txt)}
   .check em{font-style:normal;color:var(--dim);font-size:11.5px;display:block;margin-top:3px}
-  .kpi{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;
-    padding:6px 0;color:var(--dim)}
-  .kpi b{color:var(--txt);font-variant-numeric:tabular-nums;font-size:13px}
-  .scorebar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:6px 0 12px}
-  .scorebar i{display:block;height:100%;background:linear-gradient(90deg,#0ea5e9,#34d399);
-    border-radius:99px}
 
   /* ---- legenda ---- */
   .legend{font-size:11.5px;color:var(--dim);line-height:1.85;margin-top:10px;
@@ -239,11 +233,7 @@
     </section>
 
     <section class="card">
-      <h2><span class="n">3</span>O que o mapa mostra</h2>
-      <div class="modes">
-        <label><input type="radio" name="mm" value="bloqueio" checked><span><b>Onde não posso</b><small>Tapa a vermelho tudo o que a lei fecha. O que fica destapado é onde pode ir.</small></span></label>
-        <label><input type="radio" name="mm" value="atratividade"><span><b>Onde compensa</b><small>Apaga o que está fechado e acende a verde os locais consoante o movimento à volta.</small></span></label>
-      </div>
+      <h2><span class="n">3</span>Onde a lei deixa</h2>
       <div id="resumo"><p class="note">Aproxime até à zona que quer estudar para ver o resumo.</p></div>
       <div class="legend" id="legenda"></div>
     </section>
@@ -275,7 +265,6 @@
         <div class="body">
           <label class="chk"><input type="checkbox" id="lyGrid" checked><span>Mapa de cores</span></label>
           <label class="chk"><input type="checkbox" id="lyExcl" checked><span>Círculos de 500 m e 100 m</span></label>
-          <label class="chk"><input type="checkbox" id="lyPois" checked><span>Comércio e serviços</span></label>
           <label class="chk"><input type="checkbox" id="lyTransf" checked><span>Transferências aprovadas (histórico)<small>Onde o Infarmed já autorizou farmácias a mudarem-se. Mostra para onde a concorrência se mexeu.</small></span></label>
           <label class="chk"><input type="checkbox" id="chkTransf" checked><span>Tapar os locais com transferência recente<small>Aprovadas nos últimos 3 anos e ainda sem farmácia no registo: o local está entregue a outra farmácia. As mais antigas não tapam nada, porque quase sempre já foram executadas.</small></span></label>
           <button id="btnBounds">Desenhar limites de concelho e freguesia</button>
@@ -283,15 +272,13 @@
       </details>
 
       <details>
-        <summary>Comércio e correções manuais</summary>
+        <summary>Correções manuais</summary>
         <div class="body">
-          <button id="btnLoad" class="primary">Carregar comércio e serviços desta área</button>
-          <p class="note">O comércio à volta é o que alimenta o índice de atratividade. É a única coisa que ainda se carrega zona a zona: são milhões de pontos e não cabem num ficheiro do país.</p>
           <div class="row">
             <button id="btnAddPh">+ Farmácia</button>
             <button id="btnAddHu">+ Unidade de saúde</button>
           </div>
-          <p class="note">Acrescente à mão o que faltar. Clique num marcador de farmácia para o remover, ou num de saúde para alternar se conta para a regra dos 100 m.</p>
+          <p class="note">As unidades de saúde vêm do OpenStreetMap e faltam algumas. Acrescente à mão o que faltar. Clique num marcador de farmácia para o remover, ou num de saúde para alternar se conta para a regra dos 100 m.</p>
         </div>
       </details>
     </section>
@@ -351,15 +338,13 @@
 const S = {
   pharms: [],      // {id,lat,lng,name,manual}
   health: [],      // {id,lat,lng,name,legal,manual}
-  pois: [],        // {lat,lng,w,name}
   origin: null,    // {lat,lng}
   test: null,      // {lat,lng}
   cands: [],
   margin: 30,
   freg: false,
   excecional: false,
-  mode: null,             // 'origin'|'test'|'addPh'|'addHu'
-  mapMode: 'bloqueio'     // 'bloqueio'|'atratividade'
+  mode: null              // 'origin'|'test'|'addPh'|'addHu'
 };
 const D_PH = 500, D_HU = 100, D_ELEG = 1000, D_RAIO = 750;
 const ZOOM_MIN = 12;
@@ -373,7 +358,6 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const gExcl   = L.layerGroup().addTo(map);
 const gPh     = L.layerGroup().addTo(map);
 const gHu     = L.layerGroup().addTo(map);
-const gPoi    = L.layerGroup().addTo(map);
 const gOrigin = L.layerGroup().addTo(map);
 const gTest   = L.layerGroup().addTo(map);
 const gBound  = L.layerGroup().addTo(map);
@@ -528,55 +512,6 @@ function evaluate(lat,lng){
   return {overall, ph, hu, el, ex, raio, dPh:nP.d, dHu:nH.d, nearPh:nP.item, nearHu:nH.item};
 }
 
-/* ---------------- atratividade ---------------- */
-// Índice espacial dos pontos de comércio. Sem ele, cada célula do mapa de
-// elegibilidade percorreria os milhares de POI da área e a camada ficava inutilizável.
-// A célula tem de ser maior que o raio de 250 m também em longitude (a 38 N, 0.0035
-// de longitude vale cerca de 304 m), para que a vizinhança 3x3 nunca perca um ponto.
-const POI_CELL = 0.0035;
-let poiIdx = null;
-function buildPoiIndex(){
-  poiIdx = new Map();
-  for(const p of S.pois){
-    const k = Math.floor(p.lat/POI_CELL)+':'+Math.floor(p.lng/POI_CELL);
-    let a = poiIdx.get(k); if(!a) poiIdx.set(k, a=[]);
-    a.push(p);
-  }
-}
-function poisNear(lat,lng){
-  if(!poiIdx) buildPoiIndex();
-  const gy = Math.floor(lat/POI_CELL), gx = Math.floor(lng/POI_CELL), out = [];
-  for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
-    const a = poiIdx.get((gy+dy)+':'+(gx+dx));
-    if(a) for(const p of a) out.push(p);
-  }
-  return out;
-}
-
-function score(lat,lng){
-  let com = 0;
-  for(const p of poisNear(lat,lng)){
-    const d = dist(lat,lng,p.lat,p.lng);
-    if(d < 250) com += p.w * (1 - d/250);
-  }
-  // Escala absoluta e comparável entre concelhos. Curva de raiz porque a densidade
-  // comercial tem cauda muito longa: satura num valor equivalente a uma rua de comércio
-  // intenso, para não achatar tudo o resto no topo.
-  const sCom = Math.min(Math.sqrt(com/40), 1) * 50;
-
-  const nH = nearestNN(lat,lng,IDX().huAll,1400);
-  let sSau = 0;
-  if(isFinite(nH.d)){
-    if(nH.d <= 100) sSau = 0;
-    else if(nH.d <= 350) sSau = 30;
-    else if(nH.d < 1200) sSau = 30 * (1 - (nH.d-350)/850);
-  }
-
-  const nP = nearestNN(lat,lng,IDX().ph,1700);
-  const sCon = isFinite(nP.d) ? Math.max(0, Math.min(1,(nP.d-D_PH)/1000)) * 20 : 10;
-
-  return {total: sCom+sSau+sCon, com:sCom, sau:sSau, con:sCon, comRaw:com, dSau:nH.d, dPh:nP.d};
-}
 
 /* ---------------- camada de elegibilidade ---------------- */
 const GridLayer = L.GridLayer.extend({
@@ -631,27 +566,15 @@ const WHY_TXT = {
   raio:'fora do raio de 750 m permitido'
 };
 
+// Bloqueado fica opaco e a cor diz qual a regra que o fecha. O que a lei permite fica
+// quase transparente, para saltar à vista como um buraco no vermelho.
 function cellColour(lat,lng,m,cap){
   const c = classify(lat,lng,m,cap);
-
-  if(S.mapMode==='bloqueio'){
-    // Pergunta: onde NÃO posso? Bloqueado fica opaco e a cor diz o motivo.
-    // O que é permitido fica quase transparente, para saltar à vista como um buraco.
-    if(c.state==='bad')    return c.why==='saude' ? 'rgba(147,51,234,0.52)'
-                                : c.why==='raio'  ? 'rgba(71,85,105,0.55)'
-                                :                   'rgba(220,38,38,0.50)';
-    if(c.state==='margem') return 'rgba(245,158,11,0.45)';
-    return 'rgba(34,197,94,0.10)';
-  }
-
-  // Pergunta: onde compensa? O bloqueado apaga-se e só o elegível ganha cor.
-  if(c.state==='bad')    return 'rgba(15,23,42,0.55)';
-  if(c.state==='margem') return 'rgba(245,158,11,0.30)';
-  const s = score(lat,lng).total;                       // 0..100
-  const t = Math.max(0, Math.min(1, s/70));
-  const a = 0.25 + t*0.50;
-  const g = Math.round(90 + t*107);                     // 90 -> 197
-  return 'rgba(34,'+g+',94,'+a.toFixed(2)+')';
+  if(c.state==='bad')    return c.why==='saude' ? 'rgba(147,51,234,0.52)'
+                              : c.why==='raio'  ? 'rgba(71,85,105,0.55)'
+                              :                   'rgba(220,38,38,0.50)';
+  if(c.state==='margem') return 'rgba(245,158,11,0.45)';
+  return 'rgba(34,197,94,0.10)';
 }
 
 // Resumo em linguagem corrente da área visível.
@@ -713,7 +636,7 @@ function fmt(d){ return !isFinite(d) ? '—' : (d<1000 ? Math.round(d)+' m' : (d
 
 function draw(){
   bumpIdx();
-  gExcl.clearLayers(); gPh.clearLayers(); gHu.clearLayers(); gPoi.clearLayers(); gTr.clearLayers();
+  gExcl.clearLayers(); gPh.clearLayers(); gHu.clearLayers(); gTr.clearLayers();
   const showExcl = document.getElementById('lyExcl').checked;
   const others = new Set(rivals());
   const perto = map.getZoom() >= ZOOM_MIN;
@@ -753,10 +676,6 @@ function draw(){
                      'Não conta como bloqueio; confirme no Infarmed.'),{className:'lgt'})
         .addTo(gTr);
     }
-  }
-  if(document.getElementById('lyPois').checked && map.getZoom()>=15){
-    for(const p of S.pois)
-      L.circleMarker([p.lat,p.lng],{radius:2.2,color:'#facc15',weight:0,fillColor:'#facc15',fillOpacity:.55,interactive:false}).addTo(gPoi);
   }
   drawOrigin(); drawCands();
   refreshGrid(); refreshSummary();
@@ -916,7 +835,6 @@ function aplicarBase(){
 }
 const refreshBase = debounce(aplicarBase, 150);
 
-const OVERPASS = ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
 function setStatus(t, err, accao){
   const e=document.getElementById('status'); e.textContent=t; e.className = err?'err':'';
   // Um erro que o utilizador pode resolver deve trazer o botao que o resolve.
@@ -928,22 +846,14 @@ function setStatus(t, err, accao){
   }
 }
 
-// Area maxima analisada de uma vez. Acima disto a consulta ao Overpass demora
-// demasiado e a grelha de bloqueio fica pesada de desenhar.
+// Acima desta area o limite administrativo devolvido pela pesquisa e' grande demais
+// para servir de enquadramento: o mapa passa a centrar-se na localidade.
 const AREA_MAX = 45;
-function areaVisivelKm2(b){
-  const w = dist(b.getSouth(),b.getWest(),b.getSouth(),b.getEast())/1000;
-  const h = dist(b.getSouth(),b.getWest(),b.getNorth(),b.getWest())/1000;
-  return {w,h,a:w*h};
-}
-// Cada nivel de zoom divide a area por 4.
-function aproximarParaAnalise(){
-  const a = areaVisivelKm2(map.getBounds()).a;
-  if(a <= AREA_MAX) return;
-  const saltos = Math.ceil(Math.log(a/AREA_MAX)/Math.log(4));
-  map.setZoom(Math.min(19, map.getZoom()+saltos), {animate:false});
-}
 
+// Os limites de concelho e freguesia continuam a vir do Overpass, a pedido. Sao a
+// unica coisa que ainda se vai buscar la' fora, e so' quando se carrega no botao.
+const OVERPASS = ['https://overpass-api.de/api/interpreter',
+                  'https://overpass.kumi.systems/api/interpreter'];
 async function overpass(query){
   let last;
   for(const url of OVERPASS){
@@ -955,81 +865,6 @@ async function overpass(query){
     }catch(e){ last=e; }
   }
   throw last;
-}
-
-// Só estas categorias podem ser "extensão de saúde, centro de saúde ou estabelecimento
-// hospitalar". Dentistas, ópticas, fisioterapia e afins vão para comércio e serviços.
-const HEALTH_AMENITY = new Set(['hospital','clinic','doctors']);
-const HEALTH_CARE    = new Set(['hospital','centre','clinic','doctor']);
-const HU_RX = /centro de sa[uú]de|extens[aã]o de sa[uú]de|hospital|centro hospitalar|unidade local de sa[uú]de|\bULS\b|\bUSF\b|\bUCSP\b|\bUCC\b|\bURAP\b|unidade de sa[uú]de|urg[êe]ncia/i;
-function isLegalHealth(tags, name){
-  if(tags.amenity==='hospital') return true;
-  if(tags.healthcare==='hospital' || tags.healthcare==='centre') return true;
-  if(HU_RX.test(name||'')) return true;
-  return false;
-}
-const POI_W = {
-  supermarket:3, marketplace:2.5, department_store:2.5, bank:2, post_office:2,
-  school:2, kindergarten:1.5, library:1.5, townhall:1.5, bus_station:2.5,
-  fuel:1, bakery:1.4, butcher:1.2, greengrocer:1.2, convenience:1.5,
-  clothes:1, hairdresser:1, optician:1.2, cafe:1, restaurant:.9, fast_food:.8, pub:.6
-};
-
-async function loadArea(bounds){
- try{
-  const b = bounds ? L.latLngBounds(bounds) : map.getBounds();
-  const wKm = dist(b.getSouth(),b.getWest(),b.getSouth(),b.getEast())/1000;
-  if(wKm < 0.05){ setStatus('A área visível é nula. Redimensione a janela e tente novamente.', true); return; }
-  const hKm = dist(b.getSouth(),b.getWest(),b.getNorth(),b.getWest())/1000;
-  if(wKm*hKm > AREA_MAX){
-    setStatus('Área demasiado grande ('+Math.round(wKm*hKm)+' km²). O radar analisa no máximo '+AREA_MAX+' km² de cada vez.',
-      true, {label:'Aproximar e carregar aqui', fn:()=>{ aproximarParaAnalise(); setTimeout(()=>loadArea(), 60); }});
-    return;
-  }
-  // Carrega para além da área visível. Sem esta folga, uma farmácia logo a seguir à
-  // borda ficava invisível e os locais junto ao limite apareciam elegíveis sem o serem.
-  // 1100 m cobre a regra dos 500 m com margem e ainda o teste dos 1000 m na origem.
-  const dLat = 1100/111320;
-  const dLng = 1100/(111320*Math.cos(b.getCenter().lat*RAD));
-  const bb = [b.getSouth()-dLat, b.getWest()-dLng, b.getNorth()+dLat, b.getEast()+dLng].map(n=>n.toFixed(5)).join(',');
-  setStatus('A consultar o OpenStreetMap...');
-  const q = `[out:json][timeout:90];
-(
-  nwr["amenity"~"^(hospital|clinic|doctors)$"](${bb});
-  nwr["healthcare"](${bb});
-  nwr["shop"](${bb});
-  nwr["amenity"~"^(bank|post_office|cafe|restaurant|fast_food|pub|bakery|marketplace|school|kindergarten|library|townhall|bus_station|fuel|cinema|theatre)$"](${bb});
-  nwr["public_transport"="station"](${bb});
-  nwr["office"](${bb});
-);
-out center tags;`;
-  try{
-    const j = await overpass(q);
-    // As farmácias e as unidades de saúde vêm da base nacional. Desta consulta só
-    // interessa o comércio e os serviços, que alimentam o índice de atratividade e
-    // são demasiados para caberem num ficheiro do país inteiro.
-    const po=[];
-    for(const el of j.elements){
-      const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
-      if(lat==null||lng==null) continue;
-      const t = el.tags||{}, name = t.name || t['name:pt'] || '';
-      if(HEALTH_AMENITY.has(t.amenity) || HEALTH_CARE.has(t.healthcare)){
-        // Um centro de saúde não é comércio. Já bloqueia pelos 100 m; um consultório
-        // ou um dentista, esses, geram movimento e contam.
-        po.push({lat,lng,w:isLegalHealth(t,name)?0:1.6,name});
-      } else {
-        const key = t.shop || t.amenity || (t.office?'office':null) || 'other';
-        po.push({lat,lng,w:POI_W[key] ?? (t.shop?1:(t.office?.5:.6)),name});
-      }
-    }
-    S.pois = po;
-    buildPoiIndex();
-    setStatus(S.pois.length+' pontos de comércio e serviços nesta área. O índice de atratividade já está disponível.');
-    draw();
-  }catch(e){
-    setStatus('Falha ao carregar dados: '+e.message+'. Tente novamente dentro de momentos.', true);
-  }
- }catch(e){ setStatus('Erro inesperado ao carregar: '+e.message, true); }
 }
 
 async function loadBounds(){
@@ -1090,8 +925,8 @@ function renderTest(){
     vd.className='verdict v-idle'; vd.textContent='Marque um ponto para avaliar.';
     ck.innerHTML=''; sc.innerHTML=''; btn.disabled=true; return;
   }
-  const e = evaluate(S.test.lat,S.test.lng), s = score(S.test.lat,S.test.lng);
-  S.test.eval=e; S.test.score=s;
+  const e = evaluate(S.test.lat,S.test.lng);
+  S.test.eval=e;
 
   L.circleMarker([S.test.lat,S.test.lng],{radius:9,color:'#fff',weight:3,
     fillColor:e.overall==='ok'?'#22c55e':e.overall==='warn'?'#f59e0b':'#ef4444',fillOpacity:1}).addTo(gTest);
@@ -1112,13 +947,7 @@ function renderTest(){
   ck.innerHTML = rows.map(([t,r])=>
     '<div class="check"><span class="dot d-'+(r.s==='na'?'na':r.s)+'"></span><span><b>'+t+'</b><em>'+r.txt+'</em></span></div>').join('');
 
-  sc.innerHTML =
-    '<div class="kpi"><span>Índice de atratividade comercial</span><b>'+Math.round(s.total)+' / 100</b></div>'+
-    '<div class="scorebar"><i style="width:'+Math.min(100,s.total)+'%"></i></div>'+
-    '<div class="kpi"><span>Comércio e serviços em 250 m</span><b>'+Math.round(s.com)+' / 50</b></div>'+
-    '<div class="kpi"><span>Proximidade a unidades de saúde</span><b>'+Math.round(s.sau)+' / 30</b></div>'+
-    '<div class="kpi"><span>Folga face à concorrência</span><b>'+Math.round(s.con)+' / 20</b></div>'+
-    '<p class="note">Unidade de saúde mais próxima a '+fmt(s.dSau)+'. Farmácia mais próxima a '+fmt(s.dPh)+'.</p>';
+  sc.innerHTML = '';
   btn.disabled = false;
 }
 
@@ -1138,7 +967,7 @@ function drawCands(){
     const p = c.eval.overall==='ok'?'p-ok':c.eval.overall==='warn'?'p-warn':'p-bad';
     const lbl = c.eval.overall==='ok'?'ELEGÍVEL':c.eval.overall==='warn'?'A VERIFICAR':'BLOQUEADO';
     return '<div class="cand"><div class="t"><b>'+(i+1)+'. '+esc(c.name)+'</b><span class="pill '+p+'">'+lbl+'</span></div>'+
-      '<em>Atratividade '+Math.round(c.score.total)+'/100 · farmácia a '+fmt(c.eval.dPh)+' · saúde a '+fmt(c.eval.dHu)+'</em>'+
+      '<em>Farmácia mais próxima a '+fmt(c.eval.dPh)+' · unidade de saúde a '+fmt(c.eval.dHu)+'</em>'+
       '<div class="acts"><button data-go="'+i+'">Ver</button><button data-del="'+i+'">Remover</button></div></div>';
   }).join('');
   box.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
@@ -1158,9 +987,11 @@ function report(){
   if(S.origin) t += 'Localização atual da farmácia: '+S.origin.lat.toFixed(6)+', '+S.origin.lng.toFixed(6)+'\n';
   t += '\nQuadro legal: DL 307/2007 de 31 de agosto, artigos 26.º e 26.º-A (redação do DL 58/2024); Portaria 352/2012 de 30 de outubro, artigo 2.º (redação da Portaria 375/2025/1 de 4 de novembro).\n';
   t += '\n---\n\n';
+  // Elegiveis primeiro; dentro de cada grupo, os que tem mais folga face a' farmacia
+  // mais proxima, que e' o unico criterio objetivo que sobra depois do legal.
   const ord = S.cands.map((c,i)=>({c,i})).sort((a,b)=>{
     const r={ok:0,warn:1,bad:2};
-    return (r[a.c.eval.overall]-r[b.c.eval.overall]) || (b.c.score.total-a.c.score.total);
+    return (r[a.c.eval.overall]-r[b.c.eval.overall]) || ((b.c.eval.dPh||0)-(a.c.eval.dPh||0));
   });
   for(const {c,i} of ord){
     const e=c.eval;
@@ -1168,7 +999,7 @@ function report(){
     t += '- Coordenadas: '+c.lat.toFixed(6)+', '+c.lng.toFixed(6)+'\n';
     t += '- Ligação: https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=18/'+c.lat.toFixed(5)+'/'+c.lng.toFixed(5)+'\n';
     t += '- Veredicto: '+(e.overall==='ok'?'ELEGÍVEL nos requisitos de distância':e.overall==='warn'?'A VERIFICAR':'BLOQUEADO')+'\n';
-    t += '- Índice de atratividade: '+Math.round(c.score.total)+'/100 (comércio '+Math.round(c.score.com)+'/50, saúde '+Math.round(c.score.sau)+'/30, concorrência '+Math.round(c.score.con)+'/20)\n\n';
+    t += '\n';
     t += '| Requisito | Estado | Nota |\n|---|---|---|\n';
     const st=x=>x==='ok'?'Cumpre':x==='warn'?'A verificar':x==='bad'?'Não cumpre':'N/A';
     t += '| 500 m entre farmácias | '+st(e.ph.s)+' | '+e.ph.txt+' |\n';
@@ -1194,7 +1025,6 @@ function persist(){
   try{
     localStorage.setItem(K, JSON.stringify({
       cands:S.cands, origin:S.origin, margin:S.margin, freg:S.freg, excecional:S.excecional,
-      mapMode:S.mapMode,
       manual:{
         pharms:S.pharms.filter(p=>p.manual),
         health:S.health.filter(h=>h.manual),
@@ -1215,8 +1045,6 @@ function restore(){
   if(!d) return;
   S.cands = d.cands||[]; S.origin = d.origin||null;
   S.margin = d.margin ?? 30; S.freg = !!d.freg; S.excecional = !!d.excecional;
-  S.mapMode = d.mapMode === 'atratividade' ? 'atratividade' : 'bloqueio';
-  const rb = document.querySelector('input[name=mm][value="'+S.mapMode+'"]'); if(rb) rb.checked = true;
   S.pharms = (d.manual?.pharms)||[]; S.health = (d.manual?.health)||[];   // a base nacional junta-se a estes
   document.getElementById('rngMargin').value = S.margin;
   document.getElementById('lblMargin').textContent = S.margin+' m';
@@ -1259,7 +1087,6 @@ map.on('click', ev=>{
 
 document.getElementById('btnSearch').onclick = geocode;
 document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter') geocode(); });
-document.getElementById('btnLoad').onclick   = ()=>loadArea();
 document.getElementById('btnBounds').onclick = loadBounds;
 document.getElementById('btnOrigin').onclick = ()=>setMode('origin');
 document.getElementById('btnTest').onclick   = ()=>setMode('test');
@@ -1270,7 +1097,7 @@ document.getElementById('btnSave').onclick = ()=>{
   if(!S.test) return;
   const n = prompt('Nome ou morada deste candidato:','Candidato '+(S.cands.length+1));
   if(!n) return;
-  S.cands.push({name:n,lat:S.test.lat,lng:S.test.lng,eval:S.test.eval,score:S.test.score});
+  S.cands.push({name:n,lat:S.test.lat,lng:S.test.lng,eval:S.test.eval});
   persist(); drawCands();
 };
 document.getElementById('rngMargin').oninput = e=>{
@@ -1283,25 +1110,18 @@ document.getElementById('chkExcecional').onchange = e=>{ S.excecional=e.target.c
 document.getElementById('chkTransf').onchange = ()=>{ aplicarBase(); };
 document.getElementById('lyTransf').onchange = ()=>{ draw(); };
 document.getElementById('lyGrid').onchange = e=>{ e.target.checked ? grid.addTo(map) : map.removeLayer(grid); };
-document.querySelectorAll('input[name=mm]').forEach(r=>r.onchange = e=>{
-  S.mapMode = e.target.value; persist(); renderLegend(); refreshGrid();
-});
 
 function renderLegend(){
   const l = document.getElementById('legenda');
-  l.innerHTML = S.mapMode==='bloqueio'
-    ? '<i style="background:#dc2626"></i>Fechado: farmácia a menos de 500 m<br>'+
+  l.innerHTML =
+      '<i style="background:#dc2626"></i>Fechado: farmácia a menos de 500 m<br>'+
       '<i style="background:#9333ea"></i>Fechado: unidade de saúde a menos de 100 m<br>'+
       '<i style="background:#475569"></i>Fechado: fora do raio de 750 m<br>'+
       '<i style="background:#f59e0b"></i>Em cima do limite — medir em planta<br>'+
       '<i style="background:rgba(34,197,94,.25);border:1px solid #22c55e"></i><b>Destapado: pode transferir para aqui</b><br>'+
       '<i style="background:#1e293b;border:2px dashed #f59e0b"></i>Farmácia com posição aproximada pela morada<br>'+
       '<i style="background:#701a75;border:2px solid #e879f9"></i>Local entregue a outra farmácia por transferência recente<br>'+
-      '<i style="background:#3b0764;border:1px dashed #a855f7"></i>Transferência aprovada, histórico (não bloqueia)'
-    : '<i style="background:#22c55e"></i>Livre e com muito movimento à volta<br>'+
-      '<i style="background:#166534"></i>Livre mas com pouco movimento<br>'+
-      '<i style="background:#f59e0b"></i>Em cima do limite — medir em planta<br>'+
-      '<i style="background:#1e293b;border:1px solid #334155"></i>Fechado pela lei';
+      '<i style="background:#3b0764;border:1px dashed #a855f7"></i>Transferência aprovada, histórico (não bloqueia)';
   l.innerHTML += '<br><i style="background:#38bdf8"></i>Farmácia &nbsp;<i style="background:#a78bfa"></i>Unidade de saúde';
 }
 
@@ -1340,9 +1160,8 @@ map.on('mousemove', ev=>{
 });
 map.on('mouseout', ()=>{ hbDot.style.background='#475569'; hbTxt.textContent='Passe o rato sobre o mapa para saber se pode transferir para ali.'; });
 document.getElementById('lyExcl').onchange = draw;
-document.getElementById('lyPois').onchange = draw;
 
-map.on('moveend zoomend', ()=>{ persist(); refreshBase(); refreshSummary(); if(document.getElementById('lyPois').checked) draw(); });
+map.on('moveend zoomend', ()=>{ persist(); refreshBase(); refreshSummary(); });
 
 function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
 
@@ -1352,8 +1171,8 @@ renderLegend();
 draw();
 renderTest();
 setStatus(veioDoNacional
-  ? 'Concelho enquadrado. As farmácias já estão no mapa; carregue o comércio para ver a atratividade.'
-  : 'As farmácias do país já estão no mapa. Carregue o comércio desta área se quiser o índice de atratividade.');
+  ? 'Concelho enquadrado. Aproxime até à zona que quer estudar.'
+  : 'As farmácias do país já estão no mapa. Aproxime até à zona que quer estudar.');
 carregarBaseNacional();
 
 // Recolher o painel da'-lhe o ecra' todo para o mapa. O Leaflet tem de ser avisado da
