@@ -219,10 +219,12 @@ Três passos, por esta ordem:
 O painel da esquerda segue a ordem por que o trabalho se faz. O botão no canto
 superior direito esconde-o e dá o ecrã todo ao mapa.
 
-1. **Localizar a zona** — escreva o concelho ou a morada e carregue em Procurar.
-   Aproxime até ver a zona de interesse. Procurar por um concelho inteiro
-   ("Beja") devolve um limite de milhares de km²: nesses casos o mapa centra-se
-   na localidade e avisa-o. As farmácias já lá estão, do país inteiro, com
+1. **Localizar a zona** — escolha o concelho da lista dos 308, por ordem
+   alfabética. O mapa vai lá e a ficha diz quantas farmácias licenciadas tem
+   aquele concelho. Escrever o nome e esperar que o geocodificador acerte era uma
+   aposta: procurar "Ferreira" devolvia uma freguesia de Macedo de Cavaleiros. A
+   pesquisa por morada continua lá, para ir a uma rua certa, mas recolhida.
+   As farmácias já lá estão, do país inteiro, com
    **1100 m de folga para lá da borda** do ecrã, para que uma farmácia logo a
    seguir ao limite não passe despercebida.
 2. **Farmácia a transferir** — marque a localização atual. Sem isto não é

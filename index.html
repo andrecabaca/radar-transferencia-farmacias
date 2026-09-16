@@ -186,6 +186,10 @@
     border-left:2px solid var(--line2);padding-left:10px}
   #base:empty{display:none}
   #base.err{color:#fca5a5;border-left-color:var(--bad)}
+  #porMorada{border-top:none;padding-top:0;margin-top:10px}
+  #porMorada summary{font-size:11.5px}
+  #porMorada .body{padding-top:4px}
+  #cZona{margin-bottom:0}
   #concInfo{font-size:12.5px;color:var(--txt);line-height:1.55;margin-top:11px;
     border-left:2px solid var(--acc);padding-left:10px}
   #concInfo b{font-size:15px}
@@ -428,11 +432,17 @@
 
     <section class="card">
       <h2><span class="n">1</span>Localizar a zona</h2>
-      <input type="text" id="q" placeholder="Concelho, freguesia ou morada" autocomplete="off">
-      <button id="btnSearch">Procurar</button>
+      <select id="cZona"><option value="">Escolher concelho...</option></select>
       <div id="base">A carregar as farmácias do país...</div>
       <div id="concInfo"></div>
       <div id="semPos"></div>
+      <details id="porMorada">
+        <summary>Ir a uma morada certa</summary>
+        <div class="body">
+          <input type="text" id="q" placeholder="Rua, número, localidade" autocomplete="off">
+          <button id="btnSearch">Procurar</button>
+        </div>
+      </details>
       <div id="status"></div>
     </section>
 
@@ -1085,6 +1095,7 @@ async function carregarBaseNacional(){
     NAC.semPos = j.semPosicao || [];
     await carregarTransferencias();
     await carregarCapitacao();
+    montarZonas();
     fichaConcelho();
     aplicarBase();
   }catch(e){
@@ -1153,6 +1164,33 @@ function mostrarSemPosicao(nome){
     '<b>+ Farmácia</b> antes de confiar no verde.</p></details>';
 }
 
+// Escrever o nome de um concelho e esperar que o geocodificador acerte é uma aposta:
+// procurar "Ferreira" devolve uma freguesia de Macedo de Cavaleiros. Os concelhos são
+// 308 e são uma lista fechada, por isso escolhem-se de uma lista.
+function montarZonas(){
+  if(!NAC.cap) return;
+  const el = document.getElementById('cZona');
+  const nomes = NAC.cap.concelhos.map(c=>c.n).sort((a,b)=>a.localeCompare(b,'pt'));
+  el.innerHTML = '<option value="">Escolher concelho...</option>' +
+    nomes.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+}
+
+async function irParaConcelho(nome){
+  if(!nome) return;
+  const cs = await poligonos();
+  const c = cs.find(x=>x.n===nome);
+  if(!c) return;
+  let caixa = null;
+  for(const anel of c.g){
+    const b = L.latLngBounds(anel);
+    caixa = caixa ? caixa.extend(b) : b;
+  }
+  // maxZoom 13: cabe um concelho inteiro sem cair no nível em que o radar não avalia
+  // mais do que o necessário.
+  if(caixa) map.fitBounds(caixa, {padding:[24,24], maxZoom:13});
+  setStatus(nome+'. Aproxime até à zona que quer estudar.');
+}
+
 // A pergunta que se faz ao abrir uma zona é simples: quantas farmácias tem este
 // concelho. O retrato do país não responde a isso e estava a ocupar-lhe o lugar.
 let concVisto = null;
@@ -1163,6 +1201,8 @@ async function fichaConcelho(){
   const nome = await concelhoDe(c.lat, c.lng);
   if(nome === concVisto) return;
   concVisto = nome;
+  const sel = document.getElementById('cZona');
+  if(sel && sel.value !== (nome||'')) sel.value = nome || '';
   const d = nome ? conc(nome) : null;
   if(!d){ box.innerHTML = ''; mostrarSemPosicao(null); return; }
   const aprox = NAC.ph.filter(p=>p.conc===d.n && p.aprox).length;
@@ -1667,6 +1707,7 @@ map.on('click', ev=>{
   }
 });
 
+document.getElementById('cZona').onchange = e=>irParaConcelho(e.target.value);
 document.getElementById('btnSearch').onclick = geocode;
 document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter') geocode(); });
 document.getElementById('btnBounds').onclick = loadBounds;
