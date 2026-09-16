@@ -721,10 +721,15 @@ function tooltipFarmacia(p){
 // enganos em quem nao conhece os limites de cor.
 async function preencherConcelho(id, ponto){
   if(!ponto || !NAC.cap) return;
-  const el = document.getElementById(id);
-  if(el.value) return;
   const n = await concelhoDe(ponto.lat, ponto.lng);
-  if(n && conc(n)){ el.value = n; renderLim(); }
+  if(id==='cDest') S.testConc = n;
+  const el = document.getElementById(id);
+  if(el.value){ renderLim(); return; }
+  if(!n || !conc(n)){ renderLim(); return; }
+  // O destino só entra se estiver na lista dos confinantes; senão fica o aviso.
+  if(id==='cDest' && !Array.from(el.options).some(op=>op.value===n)){ renderLim(); return; }
+  el.value = n;
+  if(id==='cOrig') montarDestinos(); else renderLim();
 }
 
 function drawOrigin(){
@@ -1014,14 +1019,30 @@ function renderTest(){
 /* ---------------- artigo 26.º-A: concelho limítrofe ---------------- */
 function montarSelects(){
   if(!NAC.cap) return;
-  const opts = '<option value="">—</option>' + NAC.cap.concelhos
+  const el = document.getElementById('cOrig');
+  const antes = el.value;
+  el.innerHTML = '<option value="">—</option>' + NAC.cap.concelhos
     .map(c=>'<option value="'+esc(c.n)+'">'+esc(c.n)+'</option>').join('');
-  for(const id of ['cOrig','cDest']){
-    const el = document.getElementById(id);
-    const antes = el.value;
-    el.innerHTML = opts;
-    if(antes) el.value = antes;
+  if(antes) el.value = antes;
+  montarDestinos();
+}
+
+// O destino de uma transferencia ao abrigo do 26.o-A so' pode ser um concelho
+// confinante. Mostrar os 308 era dar 300 respostas erradas para escolher; aqui ficam
+// so' os que fazem fronteira com a origem.
+function montarDestinos(){
+  const el = document.getElementById('cDest'), o = conc(document.getElementById('cOrig').value);
+  const antes = el.value;
+  if(!o){
+    el.innerHTML = '<option value="">Escolha primeiro o concelho de origem</option>';
+    el.disabled = true;
+    renderLim();
+    return;
   }
+  el.disabled = false;
+  el.innerHTML = '<option value="">—</option>' + o.lim
+    .map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  el.value = o.lim.includes(antes) ? antes : '';
   renderLim();
 }
 const plural = (n,s1,s2)=> n+' '+(n===1?s1:s2);
@@ -1035,9 +1056,18 @@ function renderLim(){
   const EX = NAC.cap.capitacaoExigivel;
   const o = conc(document.getElementById('cOrig').value);
   const d = conc(document.getElementById('cDest').value);
-  if(!o || !d){
+  if(!o){
     vd.className='verdict v-idle';
-    vd.textContent = S.origin ? 'Escolha o concelho de destino.' : 'Escolha os dois concelhos.';
+    vd.textContent = 'Escolha o concelho de origem. O destino passa a mostrar só os que confinam com ele.';
+    ck.innerHTML=''; return;
+  }
+  if(!d){
+    vd.className='verdict v-idle';
+    // Se o ponto testado caiu fora da vizinhanca, dizer isso vale mais que um campo vazio.
+    vd.innerHTML = S.testConc && S.testConc!==o.n && !o.lim.includes(S.testConc)
+      ? 'O ponto que testou no mapa fica em <b>'+esc(S.testConc)+'</b>, que não confina com '+
+        esc(o.n)+'. Por aí o artigo 26.º-A não serve.'
+      : 'Escolha o concelho de destino. '+o.n+' confina com '+o.lim.length+': '+o.lim.join(', ')+'.';
     ck.innerHTML=''; return;
   }
   if(o.n === d.n){
@@ -1046,13 +1076,6 @@ function renderLim(){
     ck.innerHTML=''; return;
   }
   const rows = [];
-
-  // Limítrofe. A lista sai dos limites dos concelhos, com tolerância, por isso uma
-  // fronteira que seja só água merece confirmação.
-  const vizinho = o.lim.includes(d.n);
-  rows.push(['Os concelhos são limítrofes', vizinho
-    ? {s:'ok', txt:d.n+' faz fronteira com '+o.n+'. Confirme na certidão se a fronteira for só por água.'}
-    : {s:'bad', txt:d.n+' não faz fronteira com '+o.n+'. Limítrofes de '+o.n+': '+o.lim.join(', ')+'.'}]);
 
   // Capitação na origem: tem de ser inferior à exigível.
   rows.push(['Origem com capitação inferior à exigível', o.cap==null
@@ -1097,7 +1120,10 @@ function renderLim(){
     : aviso ? 'Nada impede, mas falta confirmar o que está por testar.'
             : 'Os requisitos de capitação do artigo 26.º-A estão cumpridos.';
   ck.innerHTML = rows.map(([t,r])=>
-    '<div class="check"><span class="dot d-'+(r.s==='na'?'na':r.s)+'"></span><span><b>'+t+'</b><em>'+r.txt+'</em></span></div>').join('');
+    '<div class="check"><span class="dot d-'+(r.s==='na'?'na':r.s)+'"></span><span><b>'+t+'</b><em>'+r.txt+'</em></span></div>').join('')
+    + '<p class="note">'+d.n+' é um dos '+o.lim.length+' concelhos que confinam com '+o.n+
+      '. A vizinhança é calculada sobre os limites administrativos: se a fronteira for '+
+      'só por água, confirme na certidão.</p>';
 }
 
 /* ---------------- candidatos ---------------- */
@@ -1256,7 +1282,7 @@ document.getElementById('rngMargin').oninput = e=>{
 };
 document.getElementById('chkFreg').onchange = e=>{ S.freg=e.target.checked; bumpIdx(); persist(); refreshGrid(); refreshSummary(); renderTest(); };
 document.getElementById('chkExcecional').onchange = e=>{ S.excecional=e.target.checked; bumpIdx(); persist(); drawOrigin(); refreshGrid(); refreshSummary(); renderTest(); };
-document.getElementById('cOrig').onchange = renderLim;
+document.getElementById('cOrig').onchange = montarDestinos;
 document.getElementById('cDest').onchange = renderLim;
 document.getElementById('chkTransf').onchange = ()=>{ aplicarBase(); };
 document.getElementById('lyTransf').onchange = ()=>{ draw(); };

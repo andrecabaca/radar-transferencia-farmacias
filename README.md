@@ -100,13 +100,15 @@ Um separador só para isto, porque é um teste diferente do resto: não se joga 
 metros, joga-se em **capitação** — habitantes por farmácia, contra os 3500
 exigidos para abrir farmácia nova.
 
-Escolha o concelho de origem e o de destino; se já marcou a farmácia a transferir
-e o ponto de destino no mapa, os dois campos preenchem-se sozinhos. O painel
-responde requisito a requisito:
+Escolha o concelho de origem. A lista de destinos passa a mostrar **só os
+concelhos que confinam com ele** — Beja mostra sete, Alvito mostra quatro — porque
+o artigo 26.º-A não admite mais nada. Se já marcou a farmácia a transferir e o
+ponto de destino no mapa, os campos preenchem-se sozinhos; e se o ponto testado
+cair num concelho que não confina com a origem, o painel di-lo em vez de o deixar
+com um campo vazio. Depois responde requisito a requisito:
 
 | Requisito | Onde está |
 |---|---|
-| Os concelhos são limítrofes | Calculado dos limites dos concelhos |
 | Origem com capitação **inferior** à exigível | Lei 26/2011, corpo do artigo |
 | Destino com capitação **superior** à exigível | Lei 26/2011, corpo do artigo |
 | Depois de sair a farmácia, a origem não passa dos 3500 | Alínea b) |
