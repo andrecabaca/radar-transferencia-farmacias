@@ -184,7 +184,13 @@
   #status.err{color:#fca5a5}
   #base{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:11px;
     border-left:2px solid var(--line2);padding-left:10px}
+  #base:empty{display:none}
   #base.err{color:#fca5a5;border-left-color:var(--bad)}
+  #concInfo{font-size:12.5px;color:var(--txt);line-height:1.55;margin-top:11px;
+    border-left:2px solid var(--acc);padding-left:10px}
+  #concInfo b{font-size:15px}
+  #concInfo span{color:var(--dim);font-size:11.5px;display:block;margin-top:2px}
+  #concInfo:empty{display:none}
   #semPos{margin-top:8px}
   #semPos details{border-top:none;padding-top:0;margin-top:0}
   #semPos summary{font-size:11.5px;color:#fcd34d;font-weight:600}
@@ -425,6 +431,7 @@
       <input type="text" id="q" placeholder="Concelho, freguesia ou morada" autocomplete="off">
       <button id="btnSearch">Procurar</button>
       <div id="base">A carregar as farmácias do país...</div>
+      <div id="concInfo"></div>
       <div id="semPos"></div>
       <div id="status"></div>
     </section>
@@ -542,6 +549,7 @@
       <details>
         <summary>De onde vêm os dados</summary>
         <div class="body">
+          <p id="fichaPais"></p>
           <p>A lista de farmácias é a do <strong>registo do Infarmed</strong>, que é a lista certa. O registo não tem coordenadas, só moradas: onde a farmácia casa pelo nome com um ponto do OpenStreetMap, fica com a coordenada precisa desse ponto; as restantes são situadas pela morada, aparecem <strong>a tracejado</strong> e podem estar dezenas de metros ao lado.</p>
           <p>As <strong>unidades de saúde</strong> e o <strong>comércio</strong> vêm do OpenStreetMap, que é colaborativo e está incompleto fora dos centros urbanos. Confirme a lista antes de decidir e acrescente à mão o que faltar.</p>
           <p>A classificação de uma unidade como centro de saúde, extensão de saúde ou estabelecimento hospitalar é feita por heurística sobre o nome e as etiquetas. Uma clínica ou consultório privado não é nenhuma dessas coisas e não deve contar para os 100 m. Verifique caso a caso.</p>
@@ -1061,27 +1069,23 @@ async function carregarBaseNacional(){
                                   dono:p.d||'', nDono:p.q||0}));
     NAC.hu = j.saude.map(h=>({id:h.i, lat:h.y, lng:h.x, name:h.n, legal:!!h.l, manual:false}));
     NAC.data = j.gerado; NAC.ok = true;
+    // O retrato do país é para se ler uma vez, na base legal; aqui interessa o
+    // concelho que se está a ver.
     const nAprox = NAC.ph.filter(p=>p.aprox).length;
-    setBase(NAC.ph.length.toLocaleString('pt-PT')+' farmácias licenciadas (registo do '+
-            'Infarmed, '+NAC.data+'), o país inteiro, sem carregar zona a zona. '+
-            (NAC.ph.length-nAprox).toLocaleString('pt-PT')+' com posição exata e '+
-            nAprox.toLocaleString('pt-PT')+' situadas pela morada — estas aparecem a '+
-            'tracejado e a distância tem de ser confirmada em planta.');
+    setBase('');
+    const ficha = document.getElementById('fichaPais');
+    if(ficha) ficha.innerHTML = NAC.ph.length.toLocaleString('pt-PT')+' farmácias '+
+      'licenciadas no país (registo do Infarmed, '+NAC.data+'): '+
+      (NAC.ph.length-nAprox).toLocaleString('pt-PT')+' com posição exata e '+
+      nAprox.toLocaleString('pt-PT')+' situadas pela morada.';
     // Meia dúzia de farmácias licenciadas não tem morada que o geocodificador
     // entenda. Pô-las no centro do concelho seria inventar uma zona de exclusão onde
     // ela não existe; calá-las seria repetir o erro que nos trouxe até aqui. Ficam
     // listadas, com a morada, para serem acrescentadas à mão quando forem ao caso.
-    const sp = j.semPosicao || [];
-    if(sp.length){
-      document.getElementById('semPos').innerHTML =
-        '<details><summary>'+sp.length+' farmácias licenciadas ficaram sem posição — '+
-        'ver quais</summary><ul>'+sp.map(x=>'<li><b>'+x.n+'</b>, '+x.c+
-        (x.m?' — '+x.m:'')+'</li>').join('')+'</ul>'+
-        '<p class="note">Não estão no mapa. Se trabalhar num destes concelhos, '+
-        'marque-as à mão com <b>+ Farmácia</b> antes de confiar no verde.</p></details>';
-    }
+    NAC.semPos = j.semPosicao || [];
     await carregarTransferencias();
     await carregarCapitacao();
+    fichaConcelho();
     aplicarBase();
   }catch(e){
     setBase('Não foi possível carregar a base nacional ('+e.message+'). Corra '+
@@ -1134,6 +1138,42 @@ async function enquadrarConcelhos(){
   // maxZoom para nao colar o mapa a um concelho pequeno; o padding deixa respirar.
   if(caixa) map.fitBounds(caixa, {padding:[30,30], maxZoom:14});
 }
+
+// O aviso das que não têm posição só serve quando se está no concelho delas. Fora
+// dele era uma lista a ocupar espaço para nada.
+function mostrarSemPosicao(nome){
+  const box = document.getElementById('semPos');
+  const lista = (NAC.semPos||[]).filter(x=>!nome || x.c===nome);
+  if(!nome || !lista.length){ box.innerHTML=''; return; }
+  box.innerHTML = '<details open><summary>Atenção: '+
+    (lista.length===1 ? '1 farmácia licenciada de '+esc(nome)+' não está no mapa'
+                      : lista.length+' farmácias licenciadas de '+esc(nome)+' não estão no mapa')+
+    '</summary><ul>'+lista.map(x=>'<li><b>'+esc(x.n)+'</b>'+(x.m?' — '+esc(x.m):'')+'</li>').join('')+
+    '</ul><p class="note">A morada não foi possível situar. Marque-as à mão com '+
+    '<b>+ Farmácia</b> antes de confiar no verde.</p></details>';
+}
+
+// A pergunta que se faz ao abrir uma zona é simples: quantas farmácias tem este
+// concelho. O retrato do país não responde a isso e estava a ocupar-lhe o lugar.
+let concVisto = null;
+async function fichaConcelho(){
+  const box = document.getElementById('concInfo');
+  if(!NAC.cap || !NAC.ok) return;
+  const c = map.getCenter();
+  const nome = await concelhoDe(c.lat, c.lng);
+  if(nome === concVisto) return;
+  concVisto = nome;
+  const d = nome ? conc(nome) : null;
+  if(!d){ box.innerHTML = ''; mostrarSemPosicao(null); return; }
+  const aprox = NAC.ph.filter(p=>p.conc===d.n && p.aprox).length;
+  box.innerHTML = '<b>'+esc(d.n)+'</b> — '+
+    (d.f===1 ? '1 farmácia licenciada' : d.f.toLocaleString('pt-PT')+' farmácias licenciadas')+
+    (aprox ? '<span>'+(aprox===1 ? '1 delas com posição aproximada pela morada'
+                                 : aprox+' delas com posição aproximada pela morada')+
+             ', a tracejado no mapa. Medir em planta antes de decidir.</span>' : '');
+  mostrarSemPosicao(d.n);
+}
+const refreshConc = debounce(fichaConcelho, 250);
 
 // Capitação de cada concelho e lista de vizinhos, para o teste do artigo 26.º-A.
 async function carregarCapitacao(){
@@ -1717,7 +1757,7 @@ map.on('mousemove', ev=>{
 map.on('mouseout', ()=>{ hbDot.style.background='#475569'; hbTxt.textContent='Passe o rato sobre o mapa para saber se pode transferir para ali.'; });
 document.getElementById('lyExcl').onchange = draw;
 
-map.on('moveend zoomend', ()=>{ persist(); refreshBase(); refreshSummary(); });
+map.on('moveend zoomend', ()=>{ persist(); refreshBase(); refreshConc(); refreshSummary(); });
 
 function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
 
