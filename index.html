@@ -55,6 +55,7 @@
 
   /* ---- controlos ---- */
   label{display:block;font-size:12px;color:var(--dim);margin:10px 0 5px}
+  select{margin-bottom:2px}
   input[type=text],input[type=number],select{width:100%;padding:9px 11px;background:var(--panel2);
     border:1px solid var(--line2);border-radius:8px;color:var(--txt);font-size:13px;
     font-family:inherit}
@@ -248,13 +249,26 @@
     </section>
 
     <section class="card">
-      <h2><span class="n">5</span>Candidatos</h2>
+      <h2><span class="n">5</span>Concelho limítrofe</h2>
+      <p class="note" style="margin-top:0">Artigo 26.º-A. Só se aplica quando a farmácia
+      muda de concelho. Joga-se em dois números: a capitação do concelho de onde sai e a
+      do concelho para onde vai.</p>
+      <label for="cOrig">Concelho de origem</label>
+      <select id="cOrig"></select>
+      <label for="cDest">Concelho de destino</label>
+      <select id="cDest"></select>
+      <div id="limVerdict" class="verdict v-idle">Escolha os dois concelhos.</div>
+      <div id="limChecks"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">6</span>Candidatos</h2>
       <div id="cands"><p class="note">Nenhum candidato guardado.</p></div>
       <button id="btnReport" disabled>Descarregar relatório comparativo</button>
     </section>
 
     <section class="card">
-      <h2><span class="n">6</span>Afinar</h2>
+      <h2><span class="n">7</span>Afinar</h2>
       <label class="chk"><input type="checkbox" id="chkFreg"><span>Freguesia de destino com menos de 4000 habitantes<small>Dispensa a distância mínima de 100 m a unidades de saúde.</small></span></label>
       <label>Margem de segurança na medição</label>
       <div class="rng"><input type="range" id="rngMargin" min="0" max="100" step="5" value="30"><b id="lblMargin">30 m</b></div>
@@ -703,8 +717,19 @@ function tooltipFarmacia(p){
   return t;
 }
 
+// Saber em que concelho caiu a origem e o ponto testado poupa dois cliques e evita
+// enganos em quem nao conhece os limites de cor.
+async function preencherConcelho(id, ponto){
+  if(!ponto || !NAC.cap) return;
+  const el = document.getElementById(id);
+  if(el.value) return;
+  const n = await concelhoDe(ponto.lat, ponto.lng);
+  if(n && conc(n)){ el.value = n; renderLim(); }
+}
+
 function drawOrigin(){
   bumpIdx();
+  preencherConcelho('cOrig', S.origin);
   gOrigin.clearLayers();
   const el = document.getElementById('originInfo');
   if(!S.origin){
@@ -751,7 +776,7 @@ function editPoint(p, kind){
 // Onde a farmácia oficial casou com um ponto do OSM, a coordenada é a do OSM e é
 // precisa; as restantes foram geocodificadas pela morada e vêm marcadas como
 // aproximadas, porque aí a distância tem de ser confirmada em planta.
-const NAC = {ph:[], hu:[], tr:[], data:null, trData:null, ok:false};
+const NAC = {ph:[], hu:[], tr:[], cap:null, poligonos:null, data:null, trData:null, ok:false};
 
 function setBase(t, err){
   const e = document.getElementById('base');
@@ -788,6 +813,7 @@ async function carregarBaseNacional(){
         'marque-as à mão com <b>+ Farmácia</b> antes de confiar no verde.</p></details>';
     }
     await carregarTransferencias();
+    await carregarCapitacao();
     aplicarBase();
   }catch(e){
     setBase('Não foi possível carregar a base nacional ('+e.message+'). Corra '+
@@ -811,6 +837,39 @@ async function carregarTransferencias(){
     NAC.tr = [];
     console.warn('sem lista de transferências:', e.message);
   }
+}
+
+// Capitação de cada concelho e lista de vizinhos, para o teste do artigo 26.º-A.
+async function carregarCapitacao(){
+  try{
+    const r = await fetch('dados/concelhos-capitacao.json');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    NAC.cap = await r.json();
+    montarSelects();
+  }catch(e){ console.warn('sem dados de capitação:', e.message); }
+}
+
+// Os polígonos dos concelhos só fazem falta para descobrir em que concelho caiu um
+// ponto, e pesam 650 kB. Carregam-se à primeira vez que são precisos, não antes.
+async function poligonos(){
+  if(NAC.poligonos) return NAC.poligonos;
+  const r = await fetch('dados/concelhos.json');
+  NAC.poligonos = (await r.json()).concelhos;
+  return NAC.poligonos;
+}
+async function concelhoDe(lat,lng){
+  const cs = await poligonos();
+  for(const c of cs){
+    for(const anel of c.g){
+      let dentro=false;
+      for(let i=0,j=anel.length-1;i<anel.length;j=i++){
+        const yi=anel[i][0], xi=anel[i][1], yj=anel[j][0], xj=anel[j][1];
+        if((yi>lat)!==(yj>lat) && lng < (xj-xi)*(lat-yi)/(yj-yi+1e-15)+xi) dentro=!dentro;
+      }
+      if(dentro) return c.n;
+    }
+  }
+  return null;
 }
 
 // Passa para o estado de trabalho só os pontos da área visível, com a mesma folga de
@@ -928,6 +987,7 @@ function renderTest(){
   const e = evaluate(S.test.lat,S.test.lng);
   S.test.eval=e;
 
+  preencherConcelho('cDest', S.test);
   L.circleMarker([S.test.lat,S.test.lng],{radius:9,color:'#fff',weight:3,
     fillColor:e.overall==='ok'?'#22c55e':e.overall==='warn'?'#f59e0b':'#ef4444',fillOpacity:1}).addTo(gTest);
   L.circle([S.test.lat,S.test.lng],{radius:D_PH,color:'#fff',weight:1,dashArray:'4 4',fill:false,opacity:.7,interactive:false}).addTo(gTest);
@@ -949,6 +1009,95 @@ function renderTest(){
 
   sc.innerHTML = '';
   btn.disabled = false;
+}
+
+/* ---------------- artigo 26.º-A: concelho limítrofe ---------------- */
+function montarSelects(){
+  if(!NAC.cap) return;
+  const opts = '<option value="">—</option>' + NAC.cap.concelhos
+    .map(c=>'<option value="'+esc(c.n)+'">'+esc(c.n)+'</option>').join('');
+  for(const id of ['cOrig','cDest']){
+    const el = document.getElementById(id);
+    const antes = el.value;
+    el.innerHTML = opts;
+    if(antes) el.value = antes;
+  }
+  renderLim();
+}
+const plural = (n,s1,s2)=> n+' '+(n===1?s1:s2);
+function conc(nome){
+  return NAC.cap ? NAC.cap.concelhos.find(c=>c.n===nome) : null;
+}
+
+function renderLim(){
+  const vd = document.getElementById('limVerdict'), ck = document.getElementById('limChecks');
+  if(!NAC.cap){ vd.textContent = 'Dados de capitação não carregados.'; return; }
+  const EX = NAC.cap.capitacaoExigivel;
+  const o = conc(document.getElementById('cOrig').value);
+  const d = conc(document.getElementById('cDest').value);
+  if(!o || !d){
+    vd.className='verdict v-idle';
+    vd.textContent = S.origin ? 'Escolha o concelho de destino.' : 'Escolha os dois concelhos.';
+    ck.innerHTML=''; return;
+  }
+  if(o.n === d.n){
+    vd.className='verdict v-idle';
+    vd.innerHTML = 'Mesmo concelho — o artigo 26.º-A não se aplica. Vale o artigo 26.º, que o mapa já testa.';
+    ck.innerHTML=''; return;
+  }
+  const rows = [];
+
+  // Limítrofe. A lista sai dos limites dos concelhos, com tolerância, por isso uma
+  // fronteira que seja só água merece confirmação.
+  const vizinho = o.lim.includes(d.n);
+  rows.push(['Os concelhos são limítrofes', vizinho
+    ? {s:'ok', txt:d.n+' faz fronteira com '+o.n+'. Confirme na certidão se a fronteira for só por água.'}
+    : {s:'bad', txt:d.n+' não faz fronteira com '+o.n+'. Limítrofes de '+o.n+': '+o.lim.join(', ')+'.'}]);
+
+  // Capitação na origem: tem de ser inferior à exigível.
+  rows.push(['Origem com capitação inferior à exigível', o.cap==null
+    ? {s:'warn', txt:'Sem farmácias registadas em '+o.n+'.'}
+    : o.cap < EX
+      ? {s:'ok', txt:o.n+': '+o.cap.toLocaleString('pt-PT')+' habitantes por farmácia, abaixo dos '+EX.toLocaleString('pt-PT')+'. '+o.pop.toLocaleString('pt-PT')+' habitantes para '+plural(o.f,'farmácia','farmácias')+'.'}
+      : {s:'bad', txt:o.n+': '+o.cap.toLocaleString('pt-PT')+' habitantes por farmácia, igual ou acima dos '+EX.toLocaleString('pt-PT')+'. O concelho não está em excesso de farmácias, por isso não pode exportar nenhuma.'}]);
+
+  // Capitação no destino: tem de ser superior.
+  rows.push(['Destino com capitação superior à exigível', d.cap==null
+    ? {s:'warn', txt:'Sem farmácias registadas em '+d.n+'.'}
+    : d.cap > EX
+      ? {s:'ok', txt:d.n+': '+d.cap.toLocaleString('pt-PT')+' habitantes por farmácia, acima dos '+EX.toLocaleString('pt-PT')+'. '+d.pop.toLocaleString('pt-PT')+' habitantes para '+plural(d.f,'farmácia','farmácias')+'.'}
+      : {s:'bad', txt:d.n+': '+d.cap.toLocaleString('pt-PT')+' habitantes por farmácia, igual ou abaixo dos '+EX.toLocaleString('pt-PT')+'. Já tem farmácias a mais para a população que tem.'}]);
+
+  // Depois da saída, a origem não pode ficar acima do exigível.
+  rows.push(['A origem aguenta perder a farmácia', o.capSaida==null
+    ? {s:'warn', txt:'Com uma só farmácia registada, o concelho ficaria sem nenhuma.'}
+    : o.capSaida <= EX
+      ? {s:'ok', txt:'Com menos uma farmácia, '+o.n+' passa a '+o.capSaida.toLocaleString('pt-PT')+' habitantes por farmácia. Continua dentro dos '+EX.toLocaleString('pt-PT')+'.'}
+      : {s:'bad', txt:'Com menos uma farmácia, '+o.n+' passaria a '+o.capSaida.toLocaleString('pt-PT')+' habitantes por farmácia, acima dos '+EX.toLocaleString('pt-PT')+'. A alínea b) não deixa.'}]);
+
+  // Farmácias a menos de 500 m da que se transfere, na origem.
+  if(S.origin){
+    const nv = nearest(S.origin.lat, S.origin.lng, NAC.ph.filter(p=>dist(S.origin.lat,S.origin.lng,p.lat,p.lng)>40));
+    rows.push(['Há farmácia a menos de 500 m da que se transfere', isFinite(nv.d) && nv.d < D_PH
+      ? {s:'ok', txt:fmt(nv.d)+' à mais próxima ('+nv.item.name+').'}
+      : {s:'bad', txt:'A mais próxima está a '+fmt(nv.d)+'. O requisito exige outra farmácia a menos de 500 m da que sai.'}]);
+  } else {
+    rows.push(['Há farmácia a menos de 500 m da que se transfere',
+      {s:'na', txt:'Marque a localização atual da farmácia no passo 2 para testar.'}]);
+  }
+
+  rows.push(['500 m entre farmácias no destino',
+    {s:'na', txt:'É o que o mapa mostra. Escolha o ponto de destino e veja o veredicto no passo 4.'}]);
+
+  const mau = rows.some(([,r])=>r.s==='bad');
+  const aviso = rows.some(([,r])=>r.s==='warn' || r.s==='na');
+  vd.className = 'verdict v-'+(mau?'bad':aviso?'warn':'ok');
+  vd.textContent = mau
+    ? 'Não cumpre os requisitos do artigo 26.º-A.'
+    : aviso ? 'Nada impede, mas falta confirmar o que está por testar.'
+            : 'Os requisitos de capitação do artigo 26.º-A estão cumpridos.';
+  ck.innerHTML = rows.map(([t,r])=>
+    '<div class="check"><span class="dot d-'+(r.s==='na'?'na':r.s)+'"></span><span><b>'+t+'</b><em>'+r.txt+'</em></span></div>').join('');
 }
 
 /* ---------------- candidatos ---------------- */
@@ -1107,6 +1256,8 @@ document.getElementById('rngMargin').oninput = e=>{
 };
 document.getElementById('chkFreg').onchange = e=>{ S.freg=e.target.checked; bumpIdx(); persist(); refreshGrid(); refreshSummary(); renderTest(); };
 document.getElementById('chkExcecional').onchange = e=>{ S.excecional=e.target.checked; bumpIdx(); persist(); drawOrigin(); refreshGrid(); refreshSummary(); renderTest(); };
+document.getElementById('cOrig').onchange = renderLim;
+document.getElementById('cDest').onchange = renderLim;
 document.getElementById('chkTransf').onchange = ()=>{ aplicarBase(); };
 document.getElementById('lyTransf').onchange = ()=>{ draw(); };
 document.getElementById('lyGrid').onchange = e=>{ e.target.checked ? grid.addTo(map) : map.removeLayer(grid); };

@@ -94,6 +94,36 @@ O mapa distingue duas coisas, e a diferença é importante:
 Para atualizar: descarregar o PDF por cima de `dados/transferencias-infarmed.pdf`
 e correr `python dados/transferencias.py`.
 
+## Concelho limítrofe (artigo 26.º-A)
+
+Um separador só para isto, porque é um teste diferente do resto: não se joga em
+metros, joga-se em **capitação** — habitantes por farmácia, contra os 3500
+exigidos para abrir farmácia nova.
+
+Escolha o concelho de origem e o de destino; se já marcou a farmácia a transferir
+e o ponto de destino no mapa, os dois campos preenchem-se sozinhos. O painel
+responde requisito a requisito:
+
+| Requisito | Onde está |
+|---|---|
+| Os concelhos são limítrofes | Calculado dos limites dos concelhos |
+| Origem com capitação **inferior** à exigível | Lei 26/2011, corpo do artigo |
+| Destino com capitação **superior** à exigível | Lei 26/2011, corpo do artigo |
+| Depois de sair a farmácia, a origem não passa dos 3500 | Alínea b) |
+| Há farmácia a menos de 500 m da que se transfere | Alínea a) |
+| 500 m entre farmácias no destino | É o que o mapa mostra |
+
+A capitação usa as farmácias licenciadas do registo do Infarmed, não a contagem do
+OpenStreetMap, e a população dos concelhos.  gera
+, que inclui a lista de limítrofes de cada concelho.
+
+**Cuidado com a vizinhança.** Os limites vêm simplificados para desenho, por isso
+dois concelhos contam como limítrofes quando as fronteiras passam a menos de 400 m
+um do outro. Funciona bem em terra; uma fronteira que seja só por água merece
+confirmação na certidão.
+
+No país inteiro há 95 pares origem-destino que cumprem a capitação. Não é muito.
+
 ## Quem é o dono
 
 Cada farmácia traz o proprietário e o número de farmácias que essa entidade tem
