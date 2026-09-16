@@ -663,6 +663,17 @@ const refreshGrid = debounce(()=>{ if(document.getElementById('lyGrid').checked)
 /* ---------------- desenho ---------------- */
 function fmt(d){ return !isFinite(d) ? '—' : (d<1000 ? Math.round(d)+' m' : (d/1000).toFixed(2)+' km'); }
 
+// A linha do raio de exclusao desenha-se duas vezes: primeiro um contorno escuro por
+// baixo, depois a cor por cima. Uma linha vermelha fina sobre a mancha vermelha do
+// mapa de cores desaparecia, e e' justamente a linha que diz onde acaba a proibicao.
+function anel(lat, lng, raio, cor, tracejado){
+  const traco = tracejado ? '7 6' : null;
+  L.circle([lat,lng],{radius:raio,color:'#020617',weight:5,opacity:.38,fill:false,
+    interactive:false,dashArray:traco}).addTo(gExcl);
+  L.circle([lat,lng],{radius:raio,color:cor,weight:2.5,opacity:1,fill:false,
+    interactive:false,dashArray:traco}).addTo(gExcl);
+}
+
 function draw(){
   bumpIdx();
   gExcl.clearLayers(); gPh.clearLayers(); gHu.clearLayers(); gTr.clearLayers();
@@ -673,8 +684,8 @@ function draw(){
   for(const p of (perto ? S.pharms : [])){
     // a farmácia que se transfere não gera zona de exclusão contra si própria
     const cor = p.transf ? '#e879f9' : p.aprox ? '#f59e0b' : '#0ea5e9';
-    if(showExcl && others.has(p)) L.circle([p.lat,p.lng],{radius:D_PH,color:p.transf?'#c026d3':'#ef4444',
-      weight:1,opacity:.55,fill:false,interactive:false,dashArray:p.aprox?'5 5':null}).addTo(gExcl);
+    // Rosa claro, nao vermelho: a linha tem de se ver por cima do vermelho do mapa.
+    if(showExcl && others.has(p)) anel(p.lat, p.lng, D_PH, p.transf?'#f5d0fe':'#fecdd3', p.aprox);
     L.circleMarker([p.lat,p.lng],{radius:p.transf?6:5,color:cor,weight:2,
       fillColor:p.transf?'#701a75':p.aprox?'#1e293b':'#38bdf8',fillOpacity:1,
       dashArray:p.aprox?'3 3':null})
@@ -683,7 +694,7 @@ function draw(){
       .addTo(gPh);
   }
   for(const h of (perto ? S.health : [])){
-    if(showExcl && h.legal) L.circle([h.lat,h.lng],{radius:D_HU,color:'#f59e0b',weight:1,opacity:.7,fill:false,interactive:false}).addTo(gExcl);
+    if(showExcl && h.legal) anel(h.lat, h.lng, D_HU, '#fde68a', false);
     L.circleMarker([h.lat,h.lng],{radius:5,color:h.legal?'#7c3aed':'#64748b',weight:2,fillColor:h.legal?'#a78bfa':'#94a3b8',fillOpacity:1})
       .bindTooltip(h.name+'<br>'+(h.legal?'Conta para a regra dos 100 m':'Não conta (clique para alternar)'),{className:'lgt'})
       .on('click',()=>editPoint(h,'hu'))
@@ -1313,7 +1324,9 @@ function renderLegend(){
       '<i style="background:rgba(34,197,94,.25);border:1px solid #22c55e"></i><b>Destapado: pode transferir para aqui</b><br>'+
       '<i style="background:#1e293b;border:2px dashed #f59e0b"></i>Farmácia com posição aproximada pela morada<br>'+
       '<i style="background:#701a75;border:2px solid #e879f9"></i>Local entregue a outra farmácia por transferência recente<br>'+
-      '<i style="background:#3b0764;border:1px dashed #a855f7"></i>Transferência aprovada, histórico (não bloqueia)';
+      '<i style="background:#3b0764;border:1px dashed #a855f7"></i>Transferência aprovada, histórico (não bloqueia)<br>'+
+      '<i style="background:transparent;border:2px solid #fecdd3;border-radius:50%"></i>Raio de 500 m de cada farmácia&nbsp; '+
+      '<i style="background:transparent;border:2px solid #fde68a;border-radius:50%"></i>Raio de 100 m das unidades de saúde';
   l.innerHTML += '<br><i style="background:#38bdf8"></i>Farmácia &nbsp;<i style="background:#a78bfa"></i>Unidade de saúde';
 }
 
