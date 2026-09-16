@@ -114,8 +114,8 @@ responde requisito a requisito:
 | 500 m entre farmácias no destino | É o que o mapa mostra |
 
 A capitação usa as farmácias licenciadas do registo do Infarmed, não a contagem do
-OpenStreetMap, e a população dos concelhos.  gera
-, que inclui a lista de limítrofes de cada concelho.
+OpenStreetMap, e a população dos concelhos. `dados/concelhos_capitacao.py` gera
+`concelhos-capitacao.json`, que inclui a lista de limítrofes de cada concelho.
 
 **Cuidado com a vizinhança.** Os limites vêm simplificados para desenho, por isso
 dois concelhos contam como limítrofes quando as fronteiras passam a menos de 400 m
