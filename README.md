@@ -102,7 +102,10 @@ exigidos para abrir farmácia nova.
 
 Escolha o concelho de origem e aparece um quadro com **ela e todos os concelhos
 que confinam com ela**, ordenados pela capitação: habitantes por farmácia, quantas
-farmácias tem cada um, e quais podem receber. A linha da origem mostra a capitação
+farmácias tem cada um, e uma pastilha verde ou vermelha por linha: **PODE** ou
+**NÃO**. A pastilha conjuga as duas pontas — se o concelho de origem não puder
+largar a farmácia, nenhum destino fica verde, por melhor que seja a capitação
+dele. O motivo aparece ao passar o rato por cima da linha. A linha da origem mostra a capitação
 antes e depois de sair uma farmácia, e diz se o concelho pode sequer exportar. Uma
 resposta de conjunto, em vez de sete testes um a um. Clique numa linha para a
 escolher como destino.
