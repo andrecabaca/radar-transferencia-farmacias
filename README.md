@@ -110,6 +110,12 @@ antes e depois de sair uma farmácia, e diz se o concelho pode sequer exportar. 
 resposta de conjunto, em vez de sete testes um a um. Clique numa linha para a
 escolher como destino.
 
+Escolher a origem **leva o mapa lá**: o concelho fica contornado a azul e
+enquadrado. Escolher o destino contorna-o a lilás tracejado e enquadra os dois, para
+se ver a fronteira que está em causa. Concelhos inteiros não cabem no nível de zoom
+a que o radar avalia, por isso aí o mapa serve para orientação — aproxime depois até
+à zona concreta.
+
 A lista de destinos mostra **só os concelhos que confinam com a origem** — Beja mostra sete, Alvito mostra quatro — porque
 o artigo 26.º-A não admite mais nada. Se já marcou a farmácia a transferir e o
 ponto de destino no mapa, os campos preenchem-se sozinhos; e se o ponto testado

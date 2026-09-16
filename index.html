@@ -422,6 +422,7 @@ const gOrigin = L.layerGroup().addTo(map);
 const gTest   = L.layerGroup().addTo(map);
 const gBound  = L.layerGroup().addTo(map);
 const gTr     = L.layerGroup().addTo(map);
+const gConc   = L.layerGroup().addTo(map);
 const gCand   = L.layerGroup().addTo(map);
 
 /* ---------------- geometria ---------------- */
@@ -901,6 +902,34 @@ async function carregarTransferencias(){
   }
 }
 
+// Escolher os concelhos no painel e ter de os ir procurar no mapa era trabalho a
+// dobrar. O contorno fica desenhado e o mapa enquadra o que está em jogo: só a origem,
+// ou as duas pontas quando já há destino.
+async function enquadrarConcelhos(){
+  const nomes = [document.getElementById('cOrig').value,
+                 document.getElementById('cDest').value].filter(Boolean);
+  gConc.clearLayers();
+  if(!nomes.length) return;
+  const cs = await poligonos();
+  let caixa = null;
+  nomes.forEach((nome, i) => {
+    const c = cs.find(x=>x.n===nome);
+    if(!c) return;
+    const origem = i===0;
+    for(const anel of c.g){
+      const pol = L.polygon(anel, {color:origem?'#38bdf8':'#a78bfa', weight:2.5,
+        opacity:.95, dashArray:origem?null:'8 6', fill:true,
+        fillColor:origem?'#38bdf8':'#a78bfa', fillOpacity:.05, interactive:false}).addTo(gConc);
+      caixa = caixa ? caixa.extend(pol.getBounds()) : pol.getBounds();
+    }
+    L.marker([c.c[0], c.c[1]], {interactive:false, icon:L.divIcon({className:'mkr-lbl',
+      html:'<span style="color:'+(origem?'#7dd3fc':'#c4b5fd')+'">'+esc(nome)+
+           (origem?' (origem)':' (destino)')+'</span>', iconSize:[0,0]})}).addTo(gConc);
+  });
+  // maxZoom para nao colar o mapa a um concelho pequeno; o padding deixa respirar.
+  if(caixa) map.fitBounds(caixa, {padding:[30,30], maxZoom:14});
+}
+
 // Capitação de cada concelho e lista de vizinhos, para o teste do artigo 26.º-A.
 async function carregarCapitacao(){
   try{
@@ -1168,6 +1197,7 @@ function renderVizinhos(){
   box.querySelectorAll('tr.alvo').forEach(tr=>tr.onclick=()=>{
     document.getElementById('cDest').value = tr.dataset.c;
     renderLim();
+    enquadrarConcelhos();
   });
 }
 
@@ -1412,8 +1442,8 @@ document.getElementById('rngMargin').oninput = e=>{
 };
 document.getElementById('chkFreg').onchange = e=>{ S.freg=e.target.checked; bumpIdx(); persist(); refreshGrid(); refreshSummary(); renderTest(); };
 document.getElementById('chkExcecional').onchange = e=>{ S.excecional=e.target.checked; bumpIdx(); persist(); drawOrigin(); refreshGrid(); refreshSummary(); renderTest(); };
-document.getElementById('cOrig').onchange = montarDestinos;
-document.getElementById('cDest').onchange = renderLim;
+document.getElementById('cOrig').onchange = ()=>{ montarDestinos(); enquadrarConcelhos(); };
+document.getElementById('cDest').onchange = ()=>{ renderLim(); enquadrarConcelhos(); };
 document.getElementById('chkTransf').onchange = ()=>{ aplicarBase(); };
 document.getElementById('lyTransf').onchange = ()=>{ draw(); };
 document.getElementById('lyGrid').onchange = e=>{ e.target.checked ? grid.addTo(map) : map.removeLayer(grid); };
@@ -1430,7 +1460,9 @@ function renderLegend(){
       '<i style="background:#701a75;border:2px solid #e879f9"></i>Local entregue a outra farmácia por transferência recente<br>'+
       '<i style="background:#3b0764;border:1px dashed #a855f7"></i>Transferência aprovada, histórico (não bloqueia)<br>'+
       '<i style="background:transparent;border:2px solid #fecdd3;border-radius:50%"></i>Raio de 500 m de cada farmácia&nbsp; '+
-      '<i style="background:transparent;border:2px solid #fde68a;border-radius:50%"></i>Raio de 100 m das unidades de saúde';
+      '<i style="background:transparent;border:2px solid #fde68a;border-radius:50%"></i>Raio de 100 m das unidades de saúde'+
+      (gConc.getLayers().length ? '<br><i style="background:rgba(56,189,248,.2);border:2px solid #38bdf8"></i>Concelho de origem&nbsp; '+
+        '<i style="background:rgba(167,139,250,.2);border:2px dashed #a78bfa"></i>Concelho de destino' : '');
   l.innerHTML += '<br><i style="background:#38bdf8"></i>Farmácia &nbsp;<i style="background:#a78bfa"></i>Unidade de saúde';
 }
 
