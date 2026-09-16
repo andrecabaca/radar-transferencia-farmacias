@@ -290,9 +290,11 @@
 
     <section class="card">
       <h2><span class="n">5</span>Concelho limítrofe</h2>
-      <p class="note" style="margin-top:0">Artigo 26.º-A. Só se aplica quando a farmácia
-      muda de concelho. Joga-se em dois números: a capitação do concelho de onde sai e a
-      do concelho para onde vai.</p>
+      <p class="note" style="margin-top:0">Artigo 26.º-A, na redação do DL 58/2024. Só se
+      aplica quando a farmácia muda de concelho. Joga-se em dois números: a capitação do
+      concelho de onde sai e a do concelho para onde vai. Os pressupostos são
+      <strong>cumulativos</strong> e o n.º 3 manda <strong>indeferir liminarmente</strong>
+      o pedido que falhe algum deles.</p>
       <label for="cOrig">Concelho de origem</label>
       <select id="cOrig"></select>
       <div id="limTabela"></div>
@@ -353,7 +355,13 @@
       <details>
         <summary>Transferência para concelho limítrofe</summary>
         <div class="body">
-          <p>Artigo 26.º-A do DL 307/2007. Cumulativamente: o município de origem tem capitação inferior à exigível; existem farmácias a menos de 500 m da farmácia a transferir; a capitação na origem não passa a ser superior à exigível após a saída; e há 500 m mínimos entre farmácias no destino. O concelho de destino tem de ter capitação superior.</p>
+          <p>Artigo 26.º-A do DL 307/2007, aditado pelo DL 128/2023 e com a redação do DL 58/2024, em vigor desde 30-09-2024.</p>
+          <p>As farmácias situadas em <strong>municípios com capitação inferior à exigível</strong> podem transferir-se para <strong>concelhos limítrofes com capitação superior</strong>, observadas as condições de funcionamento e verificados <strong>cumulativamente</strong>:</p>
+          <p><strong>a)</strong> Existam farmácias a menos de 500 m da farmácia que se pretende transferir;<br>
+          <strong>b)</strong> A capitação no município de origem não se torne superior à legalmente exigível para a abertura de novas farmácias;<br>
+          <strong>c)</strong> Se verifique uma distância mínima de 500 m entre farmácias na localização de destino.</p>
+          <p>O n.º 3 é seco: <strong>são liminarmente indeferidos</strong> todos os pedidos que não cumpram o n.º 1. Não há apreciação de mérito para quem falha um pressuposto.</p>
+          <p>Ao concelho de destino o artigo não exige nada <em>depois</em> da entrada — só que tenha capitação superior à exigível à data do pedido. A app mostra na mesma o que lhe acontece à capitação ao receber a farmácia, porque é o que se exigiria para ali abrir farmácia nova.</p>
         </div>
       </details>
       <details>
@@ -1207,11 +1215,11 @@ function renderLim(){
 
   // O que acontece ao destino depois de receber. Não é requisito do artigo; é o
   // requisito de abrir farmácia nova, que aqui serve de aviso.
-  rows.push(['Depois de receber, o destino mantém-se acima dos '+EX.toLocaleString('pt-PT'),
+  rows.push(['Depois de receber, o destino mantém-se acima dos '+EX.toLocaleString('pt-PT')+' (não é requisito)',
     d.capEntrada==null ? {s:'na', txt:'Sem dados de população.'}
     : d.capEntrada >= EX
       ? {s:'ok', txt:d.n+' passa a '+d.capEntrada.toLocaleString('pt-PT')+' habitantes por farmácia. Continua a justificar a farmácia que recebeu.'}
-      : {s:'warn', txt:d.n+' desce para '+d.capEntrada.toLocaleString('pt-PT')+' habitantes por farmácia, abaixo dos '+EX.toLocaleString('pt-PT')+'. O artigo 26.º-A não exige nada ao destino depois da entrada — as duas condições cumulativas são sobre o município de origem — mas para abrir farmácia nova ali isto já não chegaria. Conte com o Infarmed a reparar nisto.'}]);
+      : {s:'warn', txt:d.n+' desce para '+d.capEntrada.toLocaleString('pt-PT')+' habitantes por farmácia, abaixo dos '+EX.toLocaleString('pt-PT')+'. O artigo 26.º-A não impõe isto: os três pressupostos do n.º 1 são a distância na origem, a capitação na origem depois da saída, e os 500 m no destino. Mas para abrir farmácia nova ali já não chegaria, e o efeito na rede é o mesmo.'}]);
 
   // Depois da saída, a origem não pode ficar acima do exigível.
   rows.push(['A origem aguenta perder a farmácia', o.capSaida==null

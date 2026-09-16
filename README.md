@@ -118,8 +118,8 @@ com um campo vazio. Depois responde requisito a requisito:
 
 | Requisito | Onde está |
 |---|---|
-| Origem com capitação **inferior** à exigível | Lei 26/2011, corpo do artigo |
-| Destino com capitação **superior** à exigível | Lei 26/2011, corpo do artigo |
+| Origem com capitação **inferior** à exigível | Corpo do n.º 1 |
+| Destino com capitação **superior** à exigível | Corpo do n.º 1 |
 | Depois de sair a farmácia, a origem não passa dos 3500 | Alínea b) |
 | Depois de receber, o destino mantém-se acima dos 3500 | Não é do artigo — ver abaixo |
 | Há farmácia a menos de 500 m da que se transfere | Alínea a) |
@@ -129,10 +129,21 @@ A capitação usa as farmácias licenciadas do registo do Infarmed, não a conta
 OpenStreetMap, e a população dos concelhos. `dados/concelhos_capitacao.py` gera
 `concelhos-capitacao.json`, que inclui a lista de limítrofes de cada concelho.
 
+**O texto em vigor.** Artigo 26.º-A do DL 307/2007, aditado pelo DL 128/2023 e com
+a redação do DL 58/2024, em vigor desde 30-09-2024. Farmácias em municípios com
+capitação inferior à exigível podem transferir-se para concelhos limítrofes com
+capitação superior, observadas as condições de funcionamento e verificados
+cumulativamente: **a)** existam farmácias a menos de 500 m da farmácia a
+transferir; **b)** a capitação no município de origem não se torne superior à
+exigível; **c)** haja 500 m mínimos entre farmácias no destino. O n.º 3 manda
+**indeferir liminarmente** os pedidos que não cumpram o n.º 1 — não há apreciação
+de mérito para quem falha um pressuposto.
+
 **O que acontece ao destino depois de receber.** A capitação do destino desce
 quando ele ganha uma farmácia, e as setas do quadro mostram isso nas duas pontas.
-O artigo 26.º-A **não exige nada ao destino depois da entrada** — as duas condições
-cumulativas são expressamente sobre o município de origem. Mas a regra de abrir
+O artigo 26.º-A **não exige nada ao destino depois da entrada** — dos três
+pressupostos, o único sobre capitação é a alínea b) e é expressamente sobre o
+município de origem. Mas a regra de abrir
 farmácia nova exige que a capitação continue acima dos 3500 depois de instalada, e
 uma transferência para dentro tem exatamente o mesmo efeito na rede. Por isso o
 caso está assinalado a **A VER**, em âmbar, e não a vermelho: cumpre a lei como ela
