@@ -1122,15 +1122,25 @@ function renderVizinhos(){
     .sort((a,b)=>(b.cap||0)-(a.cap||0))
     .map(c=>{
       const serve = c.cap!=null && c.cap > EX;
+      // Ao receber a farmácia o destino ganha uma e a capitação desce. O artigo não
+      // exige nada ao destino depois da entrada — as duas condições cumulativas são
+      // sobre a origem — mas a regra de abrir farmácia nova exige, e uma entrada tem
+      // o mesmo efeito na rede. Por isso isto avisa, não bloqueia.
+      const aguenta = c.capEntrada!=null && c.capEntrada >= EX;
       const viavel = podeSair && serve;
+      const estado = !viavel ? 'p-bad' : aguenta ? 'p-ok' : 'p-warn';
+      const rotulo = !viavel ? 'NÃO' : aguenta ? 'PODE' : 'A VER';
       const razao = !podeSair ? esc(o.n)+' não pode largar a farmácia: '+porque
         : !serve ? esc(c.n)+' tem '+num(c.cap)+' habitantes por farmácia, não chega aos '+num(EX)
-        : 'Capitação cumprida nas duas pontas. Falta o local, que se testa no mapa.';
+        : !aguenta ? 'Cumpre a lei, mas ao receber a farmácia '+esc(c.n)+' desce para '+
+            num(c.capEntrada)+' habitantes por farmácia, abaixo dos '+num(EX)+
+            '. O artigo não o proíbe; a regra de abrir farmácia nova proibiria.'
+        : 'Capitação cumprida nas duas pontas, antes e depois. Falta o local, que se testa no mapa.';
       return '<tr class="alvo'+(c.n===sel?' sel':'')+'" data-c="'+esc(c.n)+'" title="'+razao+'">'+
         '<td>'+esc(c.n)+'</td>'+
-        '<td class="cap">'+num(c.cap)+'</td>'+
+        '<td class="cap">'+num(c.cap)+(c.capEntrada!=null?' &rarr; '+num(c.capEntrada):'')+'</td>'+
         '<td>'+num(c.f)+'</td>'+
-        '<td><span class="pill '+(viavel?'p-ok':'p-bad')+'">'+(viavel?'PODE':'NÃO')+'</span></td></tr>';
+        '<td><span class="pill '+estado+'">'+rotulo+'</span></td></tr>';
     }).join('');
 
   box.innerHTML =
@@ -1141,9 +1151,11 @@ function renderVizinhos(){
     '<td>'+num(o.f)+'</td>'+
     '<td><span class="pill '+(podeSair?'p-ok':'p-bad')+'">'+(podeSair?'PODE SAIR':'NÃO SAI')+'</span></td></tr>'+
     linhas + '</tbody></table>'+
-    '<p class="note">'+esc(o.n)+': '+porque+'. A seta mostra a capitação depois de sair '+
-    'uma farmácia. Um destino serve quando tem mais de '+num(EX)+' habitantes por '+
-    'farmácia. Clique numa linha para a escolher.</p>';
+    '<p class="note">'+esc(o.n)+': '+porque+'. A seta mostra a capitação depois do '+
+    'movimento — a origem a perder uma farmácia, o destino a ganhar uma. Um destino '+
+    'serve quando tem mais de '+num(EX)+' habitantes por farmácia hoje; <b>A VER</b> '+
+    'é quando serve hoje mas desce abaixo disso ao receber. Clique numa linha para a '+
+    'escolher.</p>';
 
   box.querySelectorAll('tr.alvo').forEach(tr=>tr.onclick=()=>{
     document.getElementById('cDest').value = tr.dataset.c;
@@ -1192,6 +1204,14 @@ function renderLim(){
     : d.cap > EX
       ? {s:'ok', txt:d.n+': '+d.cap.toLocaleString('pt-PT')+' habitantes por farmácia, acima dos '+EX.toLocaleString('pt-PT')+'. '+d.pop.toLocaleString('pt-PT')+' habitantes para '+plural(d.f,'farmácia','farmácias')+'.'}
       : {s:'bad', txt:d.n+': '+d.cap.toLocaleString('pt-PT')+' habitantes por farmácia, igual ou abaixo dos '+EX.toLocaleString('pt-PT')+'. Já tem farmácias a mais para a população que tem.'}]);
+
+  // O que acontece ao destino depois de receber. Não é requisito do artigo; é o
+  // requisito de abrir farmácia nova, que aqui serve de aviso.
+  rows.push(['Depois de receber, o destino mantém-se acima dos '+EX.toLocaleString('pt-PT'),
+    d.capEntrada==null ? {s:'na', txt:'Sem dados de população.'}
+    : d.capEntrada >= EX
+      ? {s:'ok', txt:d.n+' passa a '+d.capEntrada.toLocaleString('pt-PT')+' habitantes por farmácia. Continua a justificar a farmácia que recebeu.'}
+      : {s:'warn', txt:d.n+' desce para '+d.capEntrada.toLocaleString('pt-PT')+' habitantes por farmácia, abaixo dos '+EX.toLocaleString('pt-PT')+'. O artigo 26.º-A não exige nada ao destino depois da entrada — as duas condições cumulativas são sobre o município de origem — mas para abrir farmácia nova ali isto já não chegaria. Conte com o Infarmed a reparar nisto.'}]);
 
   // Depois da saída, a origem não pode ficar acima do exigível.
   rows.push(['A origem aguenta perder a farmácia', o.capSaida==null

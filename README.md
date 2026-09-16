@@ -103,7 +103,7 @@ exigidos para abrir farmácia nova.
 Escolha o concelho de origem e aparece um quadro com **ela e todos os concelhos
 que confinam com ela**, ordenados pela capitação: habitantes por farmácia, quantas
 farmácias tem cada um, e uma pastilha verde ou vermelha por linha: **PODE** ou
-**NÃO**. A pastilha conjuga as duas pontas — se o concelho de origem não puder
+**A VER** ou **NÃO**. A pastilha conjuga as duas pontas — se o concelho de origem não puder
 largar a farmácia, nenhum destino fica verde, por melhor que seja a capitação
 dele. O motivo aparece ao passar o rato por cima da linha. A linha da origem mostra a capitação
 antes e depois de sair uma farmácia, e diz se o concelho pode sequer exportar. Uma
@@ -121,12 +121,26 @@ com um campo vazio. Depois responde requisito a requisito:
 | Origem com capitação **inferior** à exigível | Lei 26/2011, corpo do artigo |
 | Destino com capitação **superior** à exigível | Lei 26/2011, corpo do artigo |
 | Depois de sair a farmácia, a origem não passa dos 3500 | Alínea b) |
+| Depois de receber, o destino mantém-se acima dos 3500 | Não é do artigo — ver abaixo |
 | Há farmácia a menos de 500 m da que se transfere | Alínea a) |
 | 500 m entre farmácias no destino | É o que o mapa mostra |
 
 A capitação usa as farmácias licenciadas do registo do Infarmed, não a contagem do
 OpenStreetMap, e a população dos concelhos. `dados/concelhos_capitacao.py` gera
 `concelhos-capitacao.json`, que inclui a lista de limítrofes de cada concelho.
+
+**O que acontece ao destino depois de receber.** A capitação do destino desce
+quando ele ganha uma farmácia, e as setas do quadro mostram isso nas duas pontas.
+O artigo 26.º-A **não exige nada ao destino depois da entrada** — as duas condições
+cumulativas são expressamente sobre o município de origem. Mas a regra de abrir
+farmácia nova exige que a capitação continue acima dos 3500 depois de instalada, e
+uma transferência para dentro tem exatamente o mesmo efeito na rede. Por isso o
+caso está assinalado a **A VER**, em âmbar, e não a vermelho: cumpre a lei como ela
+está escrita, mas é o género de coisa em que o Infarmed repara.
+
+Dos 95 pares que cumprem o artigo, **47 mantêm-se acima dos 3500 depois de receber**.
+Os outros 48 passam a estar abaixo — quase sempre porque são concelhos pequenos,
+onde acrescentar uma farmácia a duas ou três muda a conta toda.
 
 **Cuidado com a vizinhança.** Os limites vêm simplificados para desenho, por isso
 dois concelhos contam como limítrofes quando as fronteiras passam a menos de 400 m

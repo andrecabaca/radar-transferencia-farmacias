@@ -96,8 +96,13 @@ def main():
         # Se sair uma farmacia, a capitacao sobe. A alinea b) do artigo exige que nao
         # passe do exigivel.
         cap_saida = round(pop / (n - 1)) if n > 1 else None
+        # E ao receber uma, desce. O artigo 26.o-A nao exige nada ao destino depois da
+        # entrada, mas a regra de abrir farmacia nova exige, e o efeito na rede e' o
+        # mesmo. Fica o numero, para se ver.
+        cap_entrada = round(pop / (n + 1)) if pop else None
         saida.append({
             'n': c['n'], 'pop': pop, 'f': n, 'cap': cap, 'capSaida': cap_saida,
+            'capEntrada': cap_entrada,
             'lim': sorted(viz[c['n']]),
         })
 
