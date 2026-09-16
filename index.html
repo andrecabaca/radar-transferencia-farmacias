@@ -26,7 +26,7 @@
   #side::-webkit-scrollbar{width:9px}
   #side::-webkit-scrollbar-thumb{background:var(--line2);border-radius:9px;
     border:3px solid var(--bg)}
-  #map{flex:1;height:100%;background:#0e1829}
+  #map{flex:1;height:100%;background:var(--mapbg,#0e1829)}
   #app.fechado{--sidebar:0px}
   #app.fechado #side{display:none}
 
@@ -245,6 +245,158 @@
     margin:0;padding:7px 11px;font-size:11.5px;background:rgba(10,17,32,.95);
     border:1px solid var(--line2);border-radius:8px;box-shadow:var(--sh);color:var(--dim)}
   #btnSide:hover{color:var(--txt)}
+
+  /* ================= TEMAS DO PAINEL =================
+     Só mexem no painel. O mapa, os anéis, o mapa de cores e os marcadores ficam
+     exatamente como estão: as cores deles dizem regras, não são decoração.
+     Escolhe-se em ?tema=claro | editorial | tecnico (ou pelos botões do cabeçalho). */
+
+  /* ---------- 1. CLARO: papel. O painel deixa de competir com o mapa. ---------- */
+  html[data-tema="claro"]{
+    --bg:#f4f6fa; --panel:#ffffff; --panel2:#f0f3f8; --panel3:#e4e9f2;
+    --line:#e2e7f0; --line2:#cdd6e4;
+    --txt:#16202e; --dim:#5a6a80; --dim2:#8494a8;
+    --ok:#0f9d6e; --warn:#b47708; --bad:#d64545; --acc:#0b7fc4; --acc-d:#0a6aa5;
+    --sh:0 1px 2px rgba(22,32,46,.05), 0 6px 20px -14px rgba(22,32,46,.35);
+  }
+  html[data-tema="claro"] .hd{background:linear-gradient(180deg,#ffffff,#f4f6fa);
+    border-bottom-color:var(--line2)}
+  html[data-tema="claro"] #side{border-right-color:var(--line2)}
+  html[data-tema="claro"] .card{border-color:var(--line)}
+  html[data-tema="claro"] .card > h2 .n{background:#e8f2fb;color:var(--acc)}
+  html[data-tema="claro"] button.primary{background:var(--acc);border-color:var(--acc-d);
+    color:#fff}
+  html[data-tema="claro"] button.primary:hover{background:var(--acc-d)}
+  html[data-tema="claro"] .v-ok{background:#e9f8f1;border-color:#9ddcc4;color:#0a6b4c}
+  html[data-tema="claro"] .v-warn{background:#fdf5e3;border-color:#e8c57e;color:#8a5a06}
+  html[data-tema="claro"] .v-bad{background:#fdeceb;border-color:#eeb0ad;color:#a32f2f}
+  html[data-tema="claro"] .v-idle{background:var(--panel2);border-color:var(--line2)}
+  html[data-tema="claro"] .p-ok{background:#d9f2e6;color:#0a6b4c}
+  html[data-tema="claro"] .p-warn{background:#fbedd0;color:#8a5a06}
+  html[data-tema="claro"] .p-bad{background:#fbdedc;color:#a32f2f}
+  html[data-tema="claro"] .viz .sim{color:#0a6b4c}
+  html[data-tema="claro"] #resumo .big b{color:#c0392b}
+  html[data-tema="claro"] #semPos summary{color:#9a6a05}
+  html[data-tema="claro"] .camadas label:has(input:checked){background:#e8f4fd}
+  html[data-tema="claro"] .seg button.on{background:#e8f4fd}
+  html[data-tema="claro"] .modes label:has(input:checked){background:#e8f4fd}
+  html[data-tema="claro"] .viz tr.orig td{background:#f2f8fd}
+  html[data-tema="claro"] .viz tr.sel td{background:#e4f1fb}
+  html[data-tema="claro"] #hoverbar{background:rgba(255,255,255,.96);color:var(--txt);
+    border-color:var(--line2)}
+  html[data-tema="claro"] #btnSide{background:rgba(255,255,255,.96);color:var(--dim)}
+  html[data-tema="claro"] .lgt{background:rgba(255,255,255,.97);color:var(--txt);
+    border-color:var(--line2)}
+  html[data-tema="claro"] #side::-webkit-scrollbar-thumb{background:#c3cddb;
+    border-color:var(--bg)}
+  html[data-tema="claro"]{--mapbg:#e8ecf2}
+  html[data-tema="claro"] .leaflet-container{background:#e8ecf2}
+
+  /* ---------- 2. EDITORIAL: menos caixas, mais texto. Lê-se como um parecer. ------- */
+  html[data-tema="editorial"]{
+    --bg:#11161d; --panel:#11161d; --panel2:#1a212b; --panel3:#232c38;
+    --line:#252e3a; --line2:#36414f;
+    --txt:#eceff3; --dim:#9aa6b5; --dim2:#74808f;
+    --acc:#d8b26a; --acc-d:#b8934f;
+    --sh:none; --r:0px;
+  }
+  html[data-tema="editorial"] .hd{background:var(--bg);padding:22px 22px 18px;
+    border-bottom:1px solid var(--line2)}
+  html[data-tema="editorial"] h1{font-size:19px;font-weight:600;letter-spacing:-.3px;
+    font-family:Georgia,"Times New Roman",serif}
+  html[data-tema="editorial"] .hd .sub{font-size:12.5px;font-style:italic;color:var(--dim)}
+  html[data-tema="editorial"] .wrap{padding:0 22px 48px;gap:0}
+  html[data-tema="editorial"] .card{background:transparent;border:none;border-radius:0;
+    box-shadow:none;padding:22px 0;border-bottom:1px solid var(--line)}
+  html[data-tema="editorial"] .card:last-child{border-bottom:none}
+  html[data-tema="editorial"] .card > h2{font-family:Georgia,"Times New Roman",serif;
+    font-size:15px;font-weight:600;letter-spacing:0;margin-bottom:14px;color:var(--txt)}
+  html[data-tema="editorial"] .card > h2 .n{background:transparent;color:var(--acc);
+    border:1px solid var(--acc);width:22px;height:22px;border-radius:50%;font-size:10.5px}
+  html[data-tema="editorial"] .card.ref{border-style:solid}
+  html[data-tema="editorial"] button,
+  html[data-tema="editorial"] input[type=text],
+  html[data-tema="editorial"] select{border-radius:3px}
+  html[data-tema="editorial"] button.primary{background:var(--acc);border-color:var(--acc);
+    color:#1a1204;font-weight:600}
+  html[data-tema="editorial"] button.primary:hover{background:#e6c384}
+  html[data-tema="editorial"] .chip,
+  html[data-tema="editorial"] .camadas label,
+  html[data-tema="editorial"] .pill{border-radius:3px}
+  html[data-tema="editorial"] .camadas label:has(input:checked){border-color:var(--acc);
+    background:rgba(216,178,106,.12);box-shadow:none}
+  html[data-tema="editorial"] .seg{border-radius:3px}
+  html[data-tema="editorial"] .seg button.on{background:rgba(216,178,106,.14);
+    box-shadow:inset 0 -2px 0 var(--acc)}
+  html[data-tema="editorial"] .verdict{border-radius:3px;border-width:1px 1px 1px 3px}
+  html[data-tema="editorial"] #resumo{background:transparent;border:none;
+    border-left:2px solid var(--line2);border-radius:0;padding:2px 0 2px 14px}
+  html[data-tema="editorial"] #resumo .big b{font-size:30px;font-weight:400;
+    font-family:Georgia,"Times New Roman",serif;color:#e8a49c}
+  html[data-tema="editorial"] a.chip:hover{border-color:var(--acc);color:var(--acc)}
+  html[data-tema="editorial"] summary{color:var(--acc)}
+  html[data-tema="editorial"] summary:hover{color:#e6c384}
+  html[data-tema="editorial"] input[type=text]:focus{box-shadow:0 0 0 3px rgba(216,178,106,.16)}
+  html[data-tema="editorial"] .modes label:has(input:checked){border-color:var(--acc);
+    background:rgba(216,178,106,.10);box-shadow:none}
+
+  /* ---------- 3. TÉCNICO: instrumento. Denso, esquadrado, números em mono. ------- */
+  html[data-tema="tecnico"]{
+    --bg:#070a0f; --panel:#0d1218; --panel2:#131a22; --panel3:#1b242f;
+    --line:#1d2630; --line2:#2b3644;
+    --txt:#dfe7ee; --dim:#8d9bab; --dim2:#65727f;
+    --ok:#2ee6a8; --warn:#ffc43d; --bad:#ff6b6b; --acc:#22d3ee; --acc-d:#0891b2;
+    --r:3px;
+    --sh:0 0 0 1px rgba(34,211,238,.04);
+  }
+  html[data-tema="tecnico"] .hd{background:var(--panel);border-bottom:1px solid var(--line2);
+    padding:13px 14px}
+  html[data-tema="tecnico"] h1{font-size:13.5px;text-transform:uppercase;
+    letter-spacing:1.4px;font-weight:700}
+  html[data-tema="tecnico"] .hd .sub{font-size:11px}
+  html[data-tema="tecnico"] .wrap{padding:10px 10px 36px;gap:8px}
+  html[data-tema="tecnico"] .card{padding:11px;border-color:var(--line2)}
+  html[data-tema="tecnico"] .card > h2{font-size:10.5px;text-transform:uppercase;
+    letter-spacing:1.2px;color:var(--acc);margin-bottom:10px;font-weight:700}
+  html[data-tema="tecnico"] .card > h2 .n{background:transparent;border:1px solid var(--acc);
+    border-radius:2px;color:var(--acc);width:18px;height:18px;font-size:10px}
+  html[data-tema="tecnico"] button,
+  html[data-tema="tecnico"] input[type=text],
+  html[data-tema="tecnico"] select,
+  html[data-tema="tecnico"] .camadas label,
+  html[data-tema="tecnico"] .chip,
+  html[data-tema="tecnico"] .pill,
+  html[data-tema="tecnico"] .verdict,
+  html[data-tema="tecnico"] .seg,
+  html[data-tema="tecnico"] #resumo,
+  html[data-tema="tecnico"] .cand{border-radius:2px}
+  html[data-tema="tecnico"] .chip{text-transform:uppercase;letter-spacing:.6px;font-size:10px}
+  html[data-tema="tecnico"] button.primary{background:var(--acc-d);border-color:var(--acc);
+    color:#04191d;font-weight:700;text-transform:uppercase;letter-spacing:.8px;font-size:11.5px}
+  html[data-tema="tecnico"] button.primary:hover{background:var(--acc);color:#04191d}
+  html[data-tema="tecnico"] .camadas label{text-transform:uppercase;letter-spacing:.5px;
+    font-size:10px}
+  html[data-tema="tecnico"] .seg button{text-transform:uppercase;letter-spacing:.8px;
+    font-size:10.5px}
+  html[data-tema="tecnico"] .verdict{font-size:12.5px;text-transform:uppercase;
+    letter-spacing:.6px;border-left-width:3px}
+  html[data-tema="tecnico"] #resumo .big b,
+  html[data-tema="tecnico"] .viz td,
+  html[data-tema="tecnico"] .viz .cap,
+  html[data-tema="tecnico"] .kpi b{font-family:ui-monospace,"SFMono-Regular",Consolas,
+    "Liberation Mono",monospace}
+  html[data-tema="tecnico"] #resumo .big b{font-size:30px;letter-spacing:-1px}
+  html[data-tema="tecnico"] .viz th{color:var(--acc);letter-spacing:.8px}
+  html[data-tema="tecnico"] .check b{font-size:11.5px}
+  html[data-tema="tecnico"] .pill{text-transform:uppercase;letter-spacing:.7px}
+  html[data-tema="tecnico"] #hoverbar{border-radius:3px;border-color:var(--line2)}
+  html[data-tema="tecnico"] #btnSide{border-radius:3px}
+
+  /* ---------- seletor de tema, no cabeçalho ---------- */
+  #temas{display:flex;gap:4px;margin-top:9px}
+  #temas button{flex:1;margin:0;padding:5px 4px;font-size:10px;text-align:center;
+    text-transform:uppercase;letter-spacing:.5px;border-radius:6px;color:var(--dim2)}
+  #temas button.on{border-color:var(--acc);color:var(--txt);background:var(--panel3)}
 </style>
 </head>
 <body>
@@ -257,6 +409,12 @@
         <span class="chip" id="chipFonte">Registo do Infarmed</span>
         <a class="chip" href="explicador-regras.html">As regras explicadas</a>
         <a class="chip" href="nacional.html">Mapa nacional &rarr;</a>
+      </div>
+      <div id="temas">
+        <button type="button" data-t="">Atual</button>
+        <button type="button" data-t="claro">Claro</button>
+        <button type="button" data-t="editorial">Editorial</button>
+        <button type="button" data-t="tecnico">Técnico</button>
       </div>
     </div>
 
@@ -1575,6 +1733,20 @@ carregarBaseNacional();
 
 // Recolher o painel da'-lhe o ecra' todo para o mapa. O Leaflet tem de ser avisado da
 // mudanca de tamanho, senao fica com metade dos mosaicos por desenhar.
+// Enquanto o André escolhe, os quatro aspetos convivem. Quando houver decisão,
+// fica um só e o seletor sai.
+function porTema(t){
+  if(t) document.documentElement.setAttribute('data-tema', t);
+  else document.documentElement.removeAttribute('data-tema');
+  document.querySelectorAll('#temas button').forEach(b=>
+    b.classList.toggle('on', (b.dataset.t||'') === (t||'')));
+  try{ localStorage.setItem('radar-tema', t||''); }catch(e){}
+}
+document.querySelectorAll('#temas button').forEach(b=>
+  b.addEventListener('click', ()=>porTema(b.dataset.t)));
+porTema(new URLSearchParams(location.search).get('tema')
+        || (()=>{ try{ return localStorage.getItem('radar-tema')||''; }catch(e){ return ''; } })());
+
 document.getElementById('btnSide').addEventListener('click', ()=>{
   const fechado = document.getElementById('app').classList.toggle('fechado');
   document.getElementById('btnSide').textContent = fechado ? 'Mostrar painel' : 'Esconder painel';
