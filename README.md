@@ -227,9 +227,14 @@ superior direito esconde-o e dá o ecrã todo ao mapa.
    seguir ao limite não passe despercebida.
 2. **Farmácia a transferir** — marque a localização atual. Sem isto não é
    possível testar o requisito do artigo 26.º n.º 2 a) nem o raio de 750 m.
-3. **Ler o mapa** — as três camadas ligam-se e desligam-se ali mesmo, por cima do
-   resumo: o mapa de cores, os círculos de 500 m e 100 m à volta de cada farmácia,
-   e as transferências aprovadas. Vermelho é o que a lei fecha, e a cor diz qual a regra que o
+3. **Ler o mapa** — o fundo escolhe-se em cima: **Mapa** (OpenStreetMap, mostra o
+   comércio da rua), **Satélite** (ortofoto com estradas e nomes por cima, para ver
+   o edifício, o passeio e o estacionamento) ou **Simples** (cinzento claro, que se
+   apaga para o vermelho das regras se ler). A escolha fica guardada.
+   Por baixo, as camadas ligam-se e desligam-se uma a uma: o mapa de cores, os
+   círculos de 500 m e 100 m, as farmácias, as unidades de saúde e as transferências
+   aprovadas. Esconder um marcador só o tira da vista — os círculos e o veredicto
+   não mudam, porque a regra continua a ser a mesma. Vermelho é o que a lei fecha, e a cor diz qual a regra que o
    fecha; âmbar está dentro da margem de erro; o que fica destapado é onde pode
    ir. O resumo diz-lhe que percentagem da área visível está fechada, porquê, e
    de quantos proprietários são as farmácias que a fecham.

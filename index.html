@@ -103,6 +103,16 @@
   .check b{display:block;font-weight:650;color:var(--txt)}
   .check em{font-style:normal;color:var(--dim);font-size:11.5px;display:block;margin-top:3px}
 
+  /* ---- fundo do mapa ---- */
+  .seg{display:flex;gap:0;margin-bottom:9px;border:1px solid var(--line2);border-radius:8px;
+    overflow:hidden;background:var(--panel2)}
+  .seg button{flex:1;margin:0;border:none;border-radius:0;background:transparent;
+    text-align:center;font-size:11.5px;padding:8px 6px;color:var(--dim)}
+  .seg button + button{border-left:1px solid var(--line2)}
+  .seg button:hover{background:var(--panel3);color:var(--txt)}
+  .seg button.on{background:rgba(56,189,248,.16);color:var(--txt);font-weight:600;
+    box-shadow:inset 0 -2px 0 var(--acc)}
+
   /* ---- camadas do mapa ---- */
   /* Estavam escondidas no fundo do painel, dentro de um bloco fechado. São o que se
      liga e desliga a olhar para o mapa, por isso vivem ao lado dele. */
@@ -270,9 +280,16 @@
 
     <section class="card">
       <h2><span class="n">3</span>Onde a lei deixa</h2>
+      <div class="seg" id="fundos">
+        <button type="button" data-f="mapa" class="on">Mapa</button>
+        <button type="button" data-f="satelite">Satélite</button>
+        <button type="button" data-f="simples">Simples</button>
+      </div>
       <div class="camadas">
         <label><input type="checkbox" id="lyGrid" checked><span>Mapa de cores</span></label>
         <label><input type="checkbox" id="lyExcl" checked><span>Círculos de 500 m e 100 m</span></label>
+        <label><input type="checkbox" id="lyPh" checked><span>Farmácias</span></label>
+        <label><input type="checkbox" id="lyHu" checked><span>Unidades de saúde</span></label>
         <label><input type="checkbox" id="lyTransf" checked><span>Transferências aprovadas</span></label>
       </div>
       <div id="resumo"><p class="note">Aproxime até à zona que quer estudar para ver o resumo.</p></div>
@@ -411,9 +428,36 @@ const ZOOM_MIN = 12;
 
 /* ---------------- mapa ---------------- */
 const map = L.map('map', {preferCanvas:true}).setView([38.7223,-9.1393], 15);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom:19, attribution:'&copy; OpenStreetMap'
-}).addTo(map);
+// Três fundos, todos sem chave de API. O mapa normal mostra o comércio da rua; o
+// satélite mostra o edifício, o passeio e o estacionamento, que é o que decide quando
+// se está a escolher a porta; o simples apaga-se para o vermelho das regras se ler.
+const FUNDOS = {
+  mapa: () => [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom:19, attribution:'&copy; OpenStreetMap'})],
+  satelite: () => [
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:19, attribution:'&copy; Esri, Maxar, Earthstar Geographics'}),
+    // Sem nomes por cima, uma ortofoto não diz em que rua se está. Vão duas camadas
+    // transparentes: as estradas com os seus nomes, e os nomes dos lugares.
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:19, opacity:.95}),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:19, opacity:.9})],
+  simples: () => [L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19, maxNativeZoom:16, attribution:'&copy; Esri, &copy; OpenStreetMap'})]
+};
+let fundoAtual = [];
+function porFundo(nome){
+  if(!FUNDOS[nome]) nome = 'mapa';
+  fundoAtual.forEach(l=>map.removeLayer(l));
+  fundoAtual = FUNDOS[nome]();
+  fundoAtual.forEach(l=>l.addTo(map).bringToBack());
+  S.fundo = nome;
+  document.querySelectorAll('#fundos button').forEach(b=>
+    b.classList.toggle('on', b.dataset.f===nome));
+  try{ persist(); }catch(e){}
+}
+porFundo('mapa');
 
 const gExcl   = L.layerGroup().addTo(map);
 const gPh     = L.layerGroup().addTo(map);
@@ -713,11 +757,14 @@ function draw(){
   const others = new Set(rivals());
   const perto = map.getZoom() >= ZOOM_MIN;
 
-  for(const p of (perto ? S.pharms : [])){
+  const verPh = document.getElementById('lyPh').checked;
+  const verHu = document.getElementById('lyHu').checked;
+  for(const p of (perto && verPh ? S.pharms : [])){
     // a farmácia que se transfere não gera zona de exclusão contra si própria
     const cor = p.transf ? '#e879f9' : p.aprox ? '#f59e0b' : '#0ea5e9';
     // Rosa claro, nao vermelho: a linha tem de se ver por cima do vermelho do mapa.
     if(showExcl && others.has(p)) anel(p.lat, p.lng, D_PH, p.transf?'#f5d0fe':'#fecdd3', p.aprox);
+    // (o anel fica mesmo com o marcador escondido: quem o desliga quer ver o mapa por baixo)
     L.circleMarker([p.lat,p.lng],{radius:p.transf?6:5,color:cor,weight:2,
       fillColor:p.transf?'#701a75':p.aprox?'#1e293b':'#38bdf8',fillOpacity:1,
       dashArray:p.aprox?'3 3':null})
@@ -725,7 +772,7 @@ function draw(){
       .on('click',()=>editPoint(p,'ph'))
       .addTo(gPh);
   }
-  for(const h of (perto ? S.health : [])){
+  for(const h of (perto && verHu ? S.health : [])){
     if(showExcl && h.legal) anel(h.lat, h.lng, D_HU, '#fde68a', false);
     L.circleMarker([h.lat,h.lng],{radius:5,color:h.legal?'#7c3aed':'#64748b',weight:2,fillColor:h.legal?'#a78bfa':'#94a3b8',fillOpacity:1})
       .bindTooltip(h.name+'<br>'+(h.legal?'Conta para a regra dos 100 m':'Não conta (clique para alternar)'),{className:'lgt'})
@@ -1360,6 +1407,7 @@ function persist(){
   try{
     localStorage.setItem(K, JSON.stringify({
       cands:S.cands, origin:S.origin, margin:S.margin, freg:S.freg, excecional:S.excecional,
+      fundo:S.fundo,
       manual:{
         pharms:S.pharms.filter(p=>p.manual),
         health:S.health.filter(h=>h.manual),
@@ -1380,6 +1428,7 @@ function restore(){
   if(!d) return;
   S.cands = d.cands||[]; S.origin = d.origin||null;
   S.margin = d.margin ?? 30; S.freg = !!d.freg; S.excecional = !!d.excecional;
+  if(d.fundo && d.fundo!=='mapa') porFundo(d.fundo);
   S.pharms = (d.manual?.pharms)||[]; S.health = (d.manual?.health)||[];   // a base nacional junta-se a estes
   document.getElementById('rngMargin').value = S.margin;
   document.getElementById('lblMargin').textContent = S.margin+' m';
@@ -1446,7 +1495,15 @@ document.getElementById('cOrig').onchange = ()=>{ montarDestinos(); enquadrarCon
 document.getElementById('cDest').onchange = ()=>{ renderLim(); enquadrarConcelhos(); };
 document.getElementById('chkTransf').onchange = ()=>{ aplicarBase(); };
 document.getElementById('lyTransf').onchange = ()=>{ draw(); };
-document.getElementById('lyGrid').onchange = e=>{ e.target.checked ? grid.addTo(map) : map.removeLayer(grid); };
+document.getElementById('lyPh').onchange = draw;
+document.getElementById('lyHu').onchange = draw;
+document.querySelectorAll('#fundos button').forEach(b=>
+  b.addEventListener('click', ()=>porFundo(b.dataset.f)));
+// Ao voltar a ligar, o Leaflet reaproveita mosaicos que ficaram por desenhar enquanto
+// a camada esteve fora do mapa. Sem o redraw, a camada voltava vazia.
+document.getElementById('lyGrid').onchange = e=>{
+  if(e.target.checked){ grid.addTo(map); grid.redraw(); } else map.removeLayer(grid);
+};
 
 function renderLegend(){
   const l = document.getElementById('legenda');
