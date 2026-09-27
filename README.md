@@ -214,6 +214,15 @@ Três passos, por esta ordem:
    `pontos-nacionais.json`. Demora perto de uma hora da primeira vez, por causa do
    limite de um pedido por segundo do Nominatim. Fica tudo em cache.
 
+## Aspeto
+
+Painel claro, cartões brancos sobre cinzento, tipo de 14 px. Num ecrã estreito o
+painel deixa de ser uma coluna: o mapa passa para cima com 52 a 58% da altura e o
+painel fica por baixo, com a barra de leitura encostada ao fundo do mapa.
+
+As cores do mapa — o vermelho das regras, os anéis de 500 m e 100 m, os marcadores —
+não pertencem ao aspeto do painel e não mudam: dizem regras, não são decoração.
+
 ## Fluxo de trabalho
 
 O painel da esquerda segue a ordem por que o trabalho se faz. O botão no canto

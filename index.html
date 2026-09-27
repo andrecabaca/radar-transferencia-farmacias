@@ -8,35 +8,43 @@
 <style>
   /* Paleta. O mapa e' o conteudo; o painel emoldura-o sem lhe roubar atencao. */
   :root{
-    --bg:#0a1120; --panel:#101b2d; --panel2:#16233a; --panel3:#1d2c45;
-    --line:#22334c; --line2:#2d4260;
-    --txt:#e8eef7; --dim:#a3b4ca; --dim2:#7d90a8;
-    --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#38bdf8; --acc-d:#0284c7;
+    --bg:#f4f6fa; --panel:#ffffff; --panel2:#f0f3f8; --panel3:#e4e9f2;
+    --line:#e2e7f0; --line2:#cdd6e4;
+    --txt:#16202e; --dim:#54637a; --dim2:#59687e;
+    --ok:#0a7f58; --warn:#946008; --bad:#c03a3a; --acc:#0a6aa5; --acc-d:#08557f;
+    --sel:#cfe6f7; --mapbg:#e8ecf2;
     --sidebar:392px; --r:10px;
-    --sh:0 1px 2px rgba(0,0,0,.35), 0 8px 24px -12px rgba(0,0,0,.6);
+    --sh:0 1px 1px rgba(22,32,46,.04);
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
-    font:13px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font:14px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     -webkit-font-smoothing:antialiased}
+  /* O que não desenhámos também veste a página: a seleção, o cursor de texto, o anel
+     de foco e os algarismos das tabelas vêm com os defeitos do browser, que não
+     pertencem a design system nenhum. */
+  ::selection{background:var(--sel);color:var(--txt)}
+  input,select,textarea{caret-color:var(--acc)}
+  :focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+  button:focus-visible,select:focus-visible,summary:focus-visible,
+  .camadas label:focus-within,.chk:focus-within{outline:2px solid var(--acc);
+    outline-offset:2px}
+  input[type=checkbox]:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
   #app{display:flex;height:100%}
   #side{width:var(--sidebar);min-width:var(--sidebar);height:100%;overflow-y:auto;
-    background:var(--bg);border-right:1px solid var(--line);scrollbar-width:thin;
-    scrollbar-color:var(--line2) transparent}
+    background:var(--bg);border-right:1px solid var(--line2);scrollbar-width:thin;
+    scrollbar-color:#c3cddb transparent}
   #side::-webkit-scrollbar{width:9px}
-  #side::-webkit-scrollbar-thumb{background:var(--line2);border-radius:9px;
+  #side::-webkit-scrollbar-thumb{background:#c3cddb;border-radius:9px;
     border:3px solid var(--bg)}
-  #map{flex:1;height:100%;background:var(--mapbg,#0e1829)}
+  #map{flex:1;height:100%;background:var(--mapbg)}
   #app.fechado{--sidebar:0px}
   #app.fechado #side{display:none}
 
-  /* ---- cabecalho ---- */
-  .hd{padding:16px 18px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;
-    background:linear-gradient(180deg,#132139,var(--bg));z-index:500}
   h1{font-size:16px;margin:0;letter-spacing:-.2px;font-weight:650}
   .hd .sub{margin:5px 0 0;font-size:12px;color:var(--dim);line-height:1.45}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 9px;
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 9px;
     border-radius:99px;border:1px solid var(--line2);background:var(--panel);color:var(--dim);
     text-decoration:none}
   a.chip:hover{border-color:var(--acc);color:var(--acc)}
@@ -49,7 +57,7 @@
   .card > h2{display:flex;align-items:center;gap:9px;font-size:12.5px;margin:0 0 12px;
     font-weight:650;color:var(--txt);letter-spacing:-.1px}
   .card > h2 .n{width:20px;height:20px;border-radius:6px;flex:none;display:grid;
-    place-items:center;background:var(--panel3);color:var(--acc);font-size:11px;
+    place-items:center;background:#e8f2fb;color:var(--acc);font-size:12px;
     font-weight:700;font-variant-numeric:tabular-nums}
   .card.ref{background:transparent;box-shadow:none;border-style:dashed}
 
@@ -59,17 +67,17 @@
   input[type=text],input[type=number],select{width:100%;padding:9px 11px;background:var(--panel2);
     border:1px solid var(--line2);border-radius:8px;color:var(--txt);font-size:13px;
     font-family:inherit}
-  input::placeholder{color:var(--dim2)}
+  input::placeholder{color:var(--dim)}
   input[type=text]:focus,input[type=number]:focus{outline:none;border-color:var(--acc);
     box-shadow:0 0 0 3px rgba(56,189,248,.14)}
   button{width:100%;padding:9px 12px;background:var(--panel2);border:1px solid var(--line2);
     border-radius:8px;color:var(--txt);font-size:12.5px;cursor:pointer;font-family:inherit;
     margin-top:8px;text-align:left;transition:background .12s,border-color .12s}
   button:hover{background:var(--panel3);border-color:#3a5578}
-  button.primary{background:linear-gradient(180deg,#0ea5e9,var(--acc-d));border-color:#0ea5e9;
-    color:#f0f9ff;font-weight:600;text-align:center}
-  button.primary:hover{background:linear-gradient(180deg,#38bdf8,#0ea5e9)}
-  button.on{background:rgba(52,211,153,.14);border-color:var(--ok);color:#a7f3d0}
+  button.primary{background:var(--acc);border-color:var(--acc-d);color:#fff;
+    font-weight:600;text-align:center}
+  button.primary:hover{background:var(--acc-d);border-color:var(--acc-d)}
+  button.on{background:#e3f6ee;border-color:var(--ok);color:#0a6b4c}
   button:disabled{opacity:.38;cursor:not-allowed}
   .row{display:flex;gap:8px}
   .row>*{flex:1}
@@ -77,40 +85,41 @@
   .chk{display:flex;align-items:flex-start;gap:9px;margin:10px 0;font-size:12.5px;
     color:var(--txt);cursor:pointer;line-height:1.45}
   .chk input{margin:2px 0 0;accent-color:var(--acc);flex:none;width:15px;height:15px}
-  .chk span small{display:block;color:var(--dim);font-size:11.5px;margin-top:3px;line-height:1.45}
+  .chk span small{display:block;color:var(--dim);font-size:12.5px;margin-top:3px;line-height:1.45}
   .rng{display:flex;align-items:center;gap:12px}
   .rng input[type=range]{flex:1;accent-color:var(--acc)}
   .rng b{font-size:13px;min-width:54px;text-align:right;color:var(--acc);
     font-variant-numeric:tabular-nums}
-  .note{font-size:11.5px;color:var(--dim);line-height:1.6;margin:9px 0 0}
+  .note{font-size:12.5px;color:var(--dim);line-height:1.65;margin:9px 0 0}
+  .note b,.check em,.check b,#concInfo,#base{font-variant-numeric:tabular-nums}
   .note strong{color:var(--txt);font-weight:600}
 
   /* ---- veredicto ---- */
   .verdict{padding:13px 14px;border-radius:9px;margin:10px 0;font-size:13.5px;
     font-weight:650;border:1px solid;line-height:1.4}
-  .v-ok{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.5);color:#6ee7b7}
-  .v-warn{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.5);color:#fcd34d}
-  .v-bad{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5);color:#fca5a5}
+  .v-ok{background:#e9f8f1;border-color:#9ddcc4;color:#0a6b4c}
+  .v-warn{background:#fdf5e3;border-color:#e8c57e;color:#8a5a06}
+  .v-bad{background:#fdeceb;border-color:#eeb0ad;color:#a32f2f}
   .v-idle{background:var(--panel2);border-color:var(--line2);color:var(--dim);font-weight:400}
   .check{display:flex;gap:10px;align-items:flex-start;font-size:12px;padding:9px 0;
     border-bottom:1px solid var(--line);line-height:1.5}
   .check:last-child{border-bottom:none}
   .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:5px}
-  .d-ok{background:var(--ok);box-shadow:0 0 0 3px rgba(52,211,153,.16)}
-  .d-warn{background:var(--warn);box-shadow:0 0 0 3px rgba(251,191,36,.16)}
-  .d-bad{background:var(--bad);box-shadow:0 0 0 3px rgba(248,113,113,.16)}
-  .d-na{background:#46587a}
+  .d-ok{background:var(--ok);box-shadow:0 0 0 3px rgba(15,157,110,.15)}
+  .d-warn{background:var(--warn);box-shadow:0 0 0 3px rgba(180,119,8,.15)}
+  .d-bad{background:var(--bad);box-shadow:0 0 0 3px rgba(214,69,69,.15)}
+  .d-na{background:#a8b4c4}
   .check b{display:block;font-weight:650;color:var(--txt)}
-  .check em{font-style:normal;color:var(--dim);font-size:11.5px;display:block;margin-top:3px}
+  .check em{font-style:normal;color:var(--dim);font-size:12.5px;display:block;margin-top:3px}
 
   /* ---- fundo do mapa ---- */
   .seg{display:flex;gap:0;margin-bottom:9px;border:1px solid var(--line2);border-radius:8px;
     overflow:hidden;background:var(--panel2)}
   .seg button{flex:1;margin:0;border:none;border-radius:0;background:transparent;
-    text-align:center;font-size:11.5px;padding:8px 6px;color:var(--dim)}
+    text-align:center;font-size:12.5px;padding:8px 6px;color:var(--dim)}
   .seg button + button{border-left:1px solid var(--line2)}
   .seg button:hover{background:var(--panel3);color:var(--txt)}
-  .seg button.on{background:rgba(56,189,248,.16);color:var(--txt);font-weight:600;
+  .seg button.on{background:#e8f4fd;color:var(--txt);font-weight:600;
     box-shadow:inset 0 -2px 0 var(--acc)}
 
   /* ---- camadas do mapa ---- */
@@ -119,15 +128,15 @@
   .camadas{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
   .camadas label{display:inline-flex;align-items:center;gap:7px;margin:0;padding:7px 11px;
     border:1px solid var(--line2);border-radius:99px;background:var(--panel2);
-    cursor:pointer;font-size:11.5px;color:var(--dim);user-select:none;
+    cursor:pointer;font-size:12.5px;color:var(--dim);user-select:none;
     transition:border-color .12s,background .12s,color .12s}
   .camadas label:hover{border-color:#3a5578;color:var(--txt)}
   .camadas label:has(input:checked){border-color:var(--acc);color:var(--txt);
-    background:rgba(56,189,248,.12);box-shadow:0 0 0 1px rgba(56,189,248,.22)}
+    background:#e8f4fd;box-shadow:0 0 0 1px rgba(11,127,196,.2)}
   .camadas input{margin:0;accent-color:var(--acc);width:14px;height:14px;flex:none}
 
   /* ---- quadro dos concelhos vizinhos ---- */
-  .viz{width:100%;border-collapse:collapse;margin:10px 0 2px;font-size:11.5px}
+  .viz{width:100%;border-collapse:collapse;margin:10px 0 2px;font-size:12.5px}
   .viz th{text-align:right;font-weight:600;color:var(--dim2);font-size:10px;
     text-transform:uppercase;letter-spacing:.4px;padding:0 0 6px;white-space:nowrap;
     border-bottom:1px solid var(--line)}
@@ -137,19 +146,20 @@
     font-variant-numeric:tabular-nums;color:var(--dim)}
   .viz td:first-child{text-align:left;color:var(--txt)}
   .viz tr:last-child td{border-bottom:none}
-  .viz tr.orig td{background:rgba(56,189,248,.07);color:var(--txt)}
+  .viz tr.orig td{background:#f2f8fd;color:var(--txt)}
   .viz tr.alvo{cursor:pointer}
+  .viz tr.alvo:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
   .viz tr.alvo:hover td{background:var(--panel2)}
-  .viz tr.sel td{background:rgba(56,189,248,.14);color:var(--txt)}
+  .viz tr.sel td{background:#e4f1fb;color:var(--txt)}
   .viz .no{color:var(--dim2)}
-  .viz .sim{color:#6ee7b7;font-weight:600}
+  .viz .sim{color:#0a6b4c;font-weight:600}
   .viz .nao{color:var(--dim2)}
   .viz .cap{font-weight:600;color:var(--txt)}
   .viz .pill{display:inline-block;font-size:9.5px;padding:3px 8px;letter-spacing:.3px}
   .viz td:last-child{padding-left:8px}
 
   /* ---- legenda ---- */
-  .legend{font-size:11.5px;color:var(--dim);line-height:1.85;margin-top:10px;
+  .legend{font-size:12.5px;color:var(--dim);line-height:1.85;margin-top:10px;
     border-top:1px solid var(--line);padding-top:10px}
   .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:8px;
     vertical-align:-1px}
@@ -159,30 +169,30 @@
     padding:11px;margin-bottom:8px;font-size:12px}
   .cand .t{display:flex;justify-content:space-between;gap:8px}
   .cand b{font-size:13px}
-  .cand em{font-style:normal;color:var(--dim);font-size:11.5px;display:block;margin-top:4px;
+  .cand em{font-style:normal;color:var(--dim);font-size:12.5px;display:block;margin-top:4px;
     line-height:1.5}
   .cand .acts{display:flex;gap:6px;margin-top:9px}
-  .cand .acts button{margin:0;padding:5px 8px;font-size:11px;text-align:center;flex:1}
+  .cand .acts button{margin:0;padding:5px 8px;font-size:12px;text-align:center;flex:1}
   .pill{font-size:10px;padding:3px 8px;border-radius:99px;font-weight:700;flex:none;
     height:fit-content;letter-spacing:.2px}
-  .p-ok{background:rgba(52,211,153,.18);color:#6ee7b7}
-  .p-warn{background:rgba(251,191,36,.18);color:#fcd34d}
-  .p-bad{background:rgba(248,113,113,.18);color:#fca5a5}
+  .p-ok{background:#d9f2e6;color:#0a6b4c}
+  .p-warn{background:#fbedd0;color:#8a5a06}
+  .p-bad{background:#fbdedc;color:#a32f2f}
 
   /* ---- blocos recolhiveis ---- */
   details{margin-top:9px;border-top:1px solid var(--line);padding-top:9px}
   .card.ref details:first-of-type{border-top:none;padding-top:0;margin-top:0}
   summary{cursor:pointer;font-size:12.5px;color:var(--acc);padding:3px 0;user-select:none;
     font-weight:550}
-  summary:hover{color:#7dd3fc}
-  details .body{font-size:11.5px;color:var(--dim);line-height:1.7;padding:8px 0 2px}
+  summary:hover{color:var(--acc-d)}
+  details .body{font-size:12.5px;color:var(--dim);line-height:1.7;padding:8px 0 2px}
   details .body p{margin:0 0 10px}
   details .body strong{color:var(--txt);font-weight:600}
 
   /* ---- estado e fonte de dados ---- */
-  #status{font-size:11.5px;color:var(--dim);margin-top:10px;min-height:16px;line-height:1.55}
+  #status{font-size:12.5px;color:var(--dim);margin-top:10px;min-height:16px;line-height:1.55}
   #status.err{color:#fca5a5}
-  #base{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:11px;
+  #base{font-size:12.5px;color:var(--dim);line-height:1.6;margin-top:11px;
     border-left:2px solid var(--line2);padding-left:10px}
   #base:empty{display:none}
   #base.err{color:#fca5a5;border-left-color:var(--bad)}
@@ -190,33 +200,18 @@
   #concInfo{font-size:12.5px;color:var(--txt);line-height:1.55;margin-top:11px;
     border-left:2px solid var(--acc);padding-left:10px}
   #concInfo b{font-size:15px}
-  #concInfo span{color:var(--dim);font-size:11.5px;display:block;margin-top:2px}
+  #concInfo span{color:var(--dim);font-size:12.5px;display:block;margin-top:2px}
   #concInfo:empty{display:none}
   #semPos{margin-top:8px}
   #semPos details{border-top:none;padding-top:0;margin-top:0}
-  #semPos summary{font-size:11.5px;color:#fcd34d;font-weight:600}
-  #semPos ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--dim);line-height:1.6}
-  .statusAct{display:block;margin-top:8px;padding:6px 10px;font-size:11.5px;cursor:pointer;
-    background:var(--acc-d);color:#fff;border:1px solid #0ea5e9;border-radius:7px;width:auto;
-    text-align:center}
-
-  /* ---- modos ---- */
-  .modes{display:flex;flex-direction:column;gap:8px}
-  .modes label{display:flex;gap:10px;align-items:flex-start;margin:0;padding:11px 12px;
-    border:1px solid var(--line2);border-radius:9px;cursor:pointer;background:var(--panel2);
-    transition:border-color .12s,background .12s}
-  .modes label:hover{border-color:#3a5578}
-  .modes label:has(input:checked){border-color:var(--acc);background:rgba(56,189,248,.10);
-    box-shadow:0 0 0 1px rgba(56,189,248,.25)}
-  .modes input{margin:2px 0 0;accent-color:var(--acc);flex:none;width:15px;height:15px}
-  .modes span b{display:block;font-size:12.5px;color:var(--txt);font-weight:650}
-  .modes span small{display:block;font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.5}
+  #semPos summary{font-size:12.5px;color:#9a6a05;font-weight:600}
+  #semPos ul{margin:8px 0 0;padding-left:16px;font-size:12.5px;color:var(--dim);line-height:1.6}
 
   /* ---- resumo da area ---- */
   #resumo{margin-top:12px;background:var(--panel2);border:1px solid var(--line);
     border-radius:9px;padding:12px}
   #resumo .big{font-size:12.5px;line-height:1.5;margin:0 0 10px;color:var(--dim)}
-  #resumo .big b{font-size:26px;color:#fca5a5;font-variant-numeric:tabular-nums;
+  #resumo .big b{font-size:26px;color:#c0392b;font-variant-numeric:tabular-nums;
     display:block;line-height:1.05;margin-bottom:3px;font-weight:700}
   #resumo .note{margin-top:0}
   ul.motivos{list-style:none;margin:0 0 10px;padding:0}
@@ -226,184 +221,53 @@
   ul.motivos li b{color:var(--txt);font-variant-numeric:tabular-nums}
 
   /* ---- mapa ---- */
-  .leaflet-container{background:#0e1829}
+  .leaflet-container{background:var(--mapbg)}
   .leaflet-control-zoom a{background:var(--panel)!important;color:var(--txt)!important;
     border-color:var(--line2)!important}
-  .leaflet-control-zoom a:hover{background:var(--panel3)!important}
-  .lgt{background:rgba(10,17,32,.95);color:var(--txt);border:1px solid var(--line2);
-    border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:600;line-height:1.5;
+  .leaflet-control-zoom a:hover{background:var(--panel2)!important}
+  .lgt{background:rgba(255,255,255,.97);color:var(--txt);border:1px solid var(--line2);
+    border-radius:7px;padding:5px 9px;font-size:12.5px;font-weight:600;line-height:1.5;
     box-shadow:var(--sh)}
   .lgt:before{display:none}
-  .mkr-lbl{font-size:10px;color:#e8eef7;text-shadow:0 0 3px #0a1120,0 0 3px #0a1120;
+  .mkr-lbl{font-size:10px;color:#16202e;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;
     white-space:nowrap;font-weight:600}
   .crosshair{cursor:crosshair!important}
 
   /* ---- barra de leitura sobre o mapa ---- */
   #hoverbar{position:fixed;left:calc(var(--sidebar) + 16px);bottom:16px;z-index:900;
     display:flex;align-items:center;gap:11px;max-width:calc(100vw - var(--sidebar) - 44px);
-    background:rgba(10,17,32,.95);border:1px solid var(--line2);border-radius:10px;
+    background:rgba(255,255,255,.97);border:1px solid var(--line2);border-radius:10px;
     padding:11px 15px;font-size:13px;color:var(--txt);box-shadow:var(--sh)}
-  #hoverbar .hb-dot{width:11px;height:11px;border-radius:50%;background:#46587a;flex:none;
-    box-shadow:0 0 0 3px rgba(70,88,122,.25)}
+  #hoverbar .hb-dot{width:11px;height:11px;border-radius:50%;background:#a8b4c4;flex:none;
+    box-shadow:0 0 0 3px rgba(168,180,196,.28)}
   #hoverbar b{font-weight:700}
 
   /* ---- recolher o painel ---- */
   #btnSide{position:fixed;top:14px;right:14px;z-index:900;width:auto;
-    margin:0;padding:7px 11px;font-size:11.5px;background:rgba(10,17,32,.95);
+    margin:0;padding:7px 11px;font-size:12.5px;background:rgba(255,255,255,.97);
     border:1px solid var(--line2);border-radius:8px;box-shadow:var(--sh);color:var(--dim)}
   #btnSide:hover{color:var(--txt)}
 
-  /* ================= TEMAS DO PAINEL =================
-     Só mexem no painel. O mapa, os anéis, o mapa de cores e os marcadores ficam
-     exatamente como estão: as cores deles dizem regras, não são decoração.
-     Escolhe-se em ?tema=claro | editorial | tecnico (ou pelos botões do cabeçalho). */
 
-  /* ---------- 1. CLARO: papel. O painel deixa de competir com o mapa. ---------- */
-  html[data-tema="claro"]{
-    --bg:#f4f6fa; --panel:#ffffff; --panel2:#f0f3f8; --panel3:#e4e9f2;
-    --line:#e2e7f0; --line2:#cdd6e4;
-    --txt:#16202e; --dim:#5a6a80; --dim2:#8494a8;
-    --ok:#0f9d6e; --warn:#b47708; --bad:#d64545; --acc:#0b7fc4; --acc-d:#0a6aa5;
-    --sh:0 1px 2px rgba(22,32,46,.05), 0 6px 20px -14px rgba(22,32,46,.35);
+  /* Num ecrã estreito o painel de 392 px não deixava mapa nenhum. Passa a empilhar,
+     com o mapa em cima: no telemóvel é ele o conteúdo e o painel a leitura. Fica no
+     fim da folha porque tem de ganhar às regras de posição da barra e do painel. */
+  @media (max-width:820px){
+    #app{flex-direction:column;height:auto;min-height:100%;position:relative}
+    #map{order:-1;flex:none;height:58vh;min-height:320px;position:sticky;top:0;z-index:2}
+    #side{width:100%;min-width:0;height:auto;overflow:visible;border-right:none;
+      border-top:1px solid var(--line2);position:relative;z-index:3}
+    .hd{position:static}
+    #hoverbar{position:absolute;left:12px;right:12px;bottom:auto;top:calc(58vh - 58px);
+      margin:0;max-width:none;z-index:4}
+    #btnSide{display:none}
+    .wrap{padding:12px 12px 32px}
   }
-  html[data-tema="claro"] .hd{background:linear-gradient(180deg,#ffffff,#f4f6fa);
-    border-bottom-color:var(--line2)}
-  html[data-tema="claro"] #side{border-right-color:var(--line2)}
-  html[data-tema="claro"] .card{border-color:var(--line)}
-  html[data-tema="claro"] .card > h2 .n{background:#e8f2fb;color:var(--acc)}
-  html[data-tema="claro"] button.primary{background:var(--acc);border-color:var(--acc-d);
-    color:#fff}
-  html[data-tema="claro"] button.primary:hover{background:var(--acc-d)}
-  html[data-tema="claro"] .v-ok{background:#e9f8f1;border-color:#9ddcc4;color:#0a6b4c}
-  html[data-tema="claro"] .v-warn{background:#fdf5e3;border-color:#e8c57e;color:#8a5a06}
-  html[data-tema="claro"] .v-bad{background:#fdeceb;border-color:#eeb0ad;color:#a32f2f}
-  html[data-tema="claro"] .v-idle{background:var(--panel2);border-color:var(--line2)}
-  html[data-tema="claro"] .p-ok{background:#d9f2e6;color:#0a6b4c}
-  html[data-tema="claro"] .p-warn{background:#fbedd0;color:#8a5a06}
-  html[data-tema="claro"] .p-bad{background:#fbdedc;color:#a32f2f}
-  html[data-tema="claro"] .viz .sim{color:#0a6b4c}
-  html[data-tema="claro"] #resumo .big b{color:#c0392b}
-  html[data-tema="claro"] #semPos summary{color:#9a6a05}
-  html[data-tema="claro"] .camadas label:has(input:checked){background:#e8f4fd}
-  html[data-tema="claro"] .seg button.on{background:#e8f4fd}
-  html[data-tema="claro"] .modes label:has(input:checked){background:#e8f4fd}
-  html[data-tema="claro"] .viz tr.orig td{background:#f2f8fd}
-  html[data-tema="claro"] .viz tr.sel td{background:#e4f1fb}
-  html[data-tema="claro"] #hoverbar{background:rgba(255,255,255,.96);color:var(--txt);
-    border-color:var(--line2)}
-  html[data-tema="claro"] #btnSide{background:rgba(255,255,255,.96);color:var(--dim)}
-  html[data-tema="claro"] .lgt{background:rgba(255,255,255,.97);color:var(--txt);
-    border-color:var(--line2)}
-  html[data-tema="claro"] #side::-webkit-scrollbar-thumb{background:#c3cddb;
-    border-color:var(--bg)}
-  html[data-tema="claro"]{--mapbg:#e8ecf2}
-  html[data-tema="claro"] .leaflet-container{background:#e8ecf2}
-
-  /* ---------- 2. EDITORIAL: menos caixas, mais texto. Lê-se como um parecer. ------- */
-  html[data-tema="editorial"]{
-    --bg:#11161d; --panel:#11161d; --panel2:#1a212b; --panel3:#232c38;
-    --line:#252e3a; --line2:#36414f;
-    --txt:#eceff3; --dim:#9aa6b5; --dim2:#74808f;
-    --acc:#d8b26a; --acc-d:#b8934f;
-    --sh:none; --r:0px;
+  @media (max-width:420px){
+    #map{height:52vh}
+    #hoverbar{top:calc(52vh - 58px);font-size:12px;padding:9px 12px}
+    .card{padding:12px}
   }
-  html[data-tema="editorial"] .hd{background:var(--bg);padding:22px 22px 18px;
-    border-bottom:1px solid var(--line2)}
-  html[data-tema="editorial"] h1{font-size:19px;font-weight:600;letter-spacing:-.3px;
-    font-family:Georgia,"Times New Roman",serif}
-  html[data-tema="editorial"] .hd .sub{font-size:12.5px;font-style:italic;color:var(--dim)}
-  html[data-tema="editorial"] .wrap{padding:0 22px 48px;gap:0}
-  html[data-tema="editorial"] .card{background:transparent;border:none;border-radius:0;
-    box-shadow:none;padding:22px 0;border-bottom:1px solid var(--line)}
-  html[data-tema="editorial"] .card:last-child{border-bottom:none}
-  html[data-tema="editorial"] .card > h2{font-family:Georgia,"Times New Roman",serif;
-    font-size:15px;font-weight:600;letter-spacing:0;margin-bottom:14px;color:var(--txt)}
-  html[data-tema="editorial"] .card > h2 .n{background:transparent;color:var(--acc);
-    border:1px solid var(--acc);width:22px;height:22px;border-radius:50%;font-size:10.5px}
-  html[data-tema="editorial"] .card.ref{border-style:solid}
-  html[data-tema="editorial"] button,
-  html[data-tema="editorial"] input[type=text],
-  html[data-tema="editorial"] select{border-radius:3px}
-  html[data-tema="editorial"] button.primary{background:var(--acc);border-color:var(--acc);
-    color:#1a1204;font-weight:600}
-  html[data-tema="editorial"] button.primary:hover{background:#e6c384}
-  html[data-tema="editorial"] .chip,
-  html[data-tema="editorial"] .camadas label,
-  html[data-tema="editorial"] .pill{border-radius:3px}
-  html[data-tema="editorial"] .camadas label:has(input:checked){border-color:var(--acc);
-    background:rgba(216,178,106,.12);box-shadow:none}
-  html[data-tema="editorial"] .seg{border-radius:3px}
-  html[data-tema="editorial"] .seg button.on{background:rgba(216,178,106,.14);
-    box-shadow:inset 0 -2px 0 var(--acc)}
-  html[data-tema="editorial"] .verdict{border-radius:3px;border-width:1px 1px 1px 3px}
-  html[data-tema="editorial"] #resumo{background:transparent;border:none;
-    border-left:2px solid var(--line2);border-radius:0;padding:2px 0 2px 14px}
-  html[data-tema="editorial"] #resumo .big b{font-size:30px;font-weight:400;
-    font-family:Georgia,"Times New Roman",serif;color:#e8a49c}
-  html[data-tema="editorial"] a.chip:hover{border-color:var(--acc);color:var(--acc)}
-  html[data-tema="editorial"] summary{color:var(--acc)}
-  html[data-tema="editorial"] summary:hover{color:#e6c384}
-  html[data-tema="editorial"] input[type=text]:focus{box-shadow:0 0 0 3px rgba(216,178,106,.16)}
-  html[data-tema="editorial"] .modes label:has(input:checked){border-color:var(--acc);
-    background:rgba(216,178,106,.10);box-shadow:none}
-
-  /* ---------- 3. TÉCNICO: instrumento. Denso, esquadrado, números em mono. ------- */
-  html[data-tema="tecnico"]{
-    --bg:#070a0f; --panel:#0d1218; --panel2:#131a22; --panel3:#1b242f;
-    --line:#1d2630; --line2:#2b3644;
-    --txt:#dfe7ee; --dim:#8d9bab; --dim2:#65727f;
-    --ok:#2ee6a8; --warn:#ffc43d; --bad:#ff6b6b; --acc:#22d3ee; --acc-d:#0891b2;
-    --r:3px;
-    --sh:0 0 0 1px rgba(34,211,238,.04);
-  }
-  html[data-tema="tecnico"] .hd{background:var(--panel);border-bottom:1px solid var(--line2);
-    padding:13px 14px}
-  html[data-tema="tecnico"] h1{font-size:13.5px;text-transform:uppercase;
-    letter-spacing:1.4px;font-weight:700}
-  html[data-tema="tecnico"] .hd .sub{font-size:11px}
-  html[data-tema="tecnico"] .wrap{padding:10px 10px 36px;gap:8px}
-  html[data-tema="tecnico"] .card{padding:11px;border-color:var(--line2)}
-  html[data-tema="tecnico"] .card > h2{font-size:10.5px;text-transform:uppercase;
-    letter-spacing:1.2px;color:var(--acc);margin-bottom:10px;font-weight:700}
-  html[data-tema="tecnico"] .card > h2 .n{background:transparent;border:1px solid var(--acc);
-    border-radius:2px;color:var(--acc);width:18px;height:18px;font-size:10px}
-  html[data-tema="tecnico"] button,
-  html[data-tema="tecnico"] input[type=text],
-  html[data-tema="tecnico"] select,
-  html[data-tema="tecnico"] .camadas label,
-  html[data-tema="tecnico"] .chip,
-  html[data-tema="tecnico"] .pill,
-  html[data-tema="tecnico"] .verdict,
-  html[data-tema="tecnico"] .seg,
-  html[data-tema="tecnico"] #resumo,
-  html[data-tema="tecnico"] .cand{border-radius:2px}
-  html[data-tema="tecnico"] .chip{text-transform:uppercase;letter-spacing:.6px;font-size:10px}
-  html[data-tema="tecnico"] button.primary{background:var(--acc-d);border-color:var(--acc);
-    color:#04191d;font-weight:700;text-transform:uppercase;letter-spacing:.8px;font-size:11.5px}
-  html[data-tema="tecnico"] button.primary:hover{background:var(--acc);color:#04191d}
-  html[data-tema="tecnico"] .camadas label{text-transform:uppercase;letter-spacing:.5px;
-    font-size:10px}
-  html[data-tema="tecnico"] .seg button{text-transform:uppercase;letter-spacing:.8px;
-    font-size:10.5px}
-  html[data-tema="tecnico"] .verdict{font-size:12.5px;text-transform:uppercase;
-    letter-spacing:.6px;border-left-width:3px}
-  html[data-tema="tecnico"] #resumo .big b,
-  html[data-tema="tecnico"] .viz td,
-  html[data-tema="tecnico"] .viz .cap,
-  html[data-tema="tecnico"] .kpi b{font-family:ui-monospace,"SFMono-Regular",Consolas,
-    "Liberation Mono",monospace}
-  html[data-tema="tecnico"] #resumo .big b{font-size:30px;letter-spacing:-1px}
-  html[data-tema="tecnico"] .viz th{color:var(--acc);letter-spacing:.8px}
-  html[data-tema="tecnico"] .check b{font-size:11.5px}
-  html[data-tema="tecnico"] .pill{text-transform:uppercase;letter-spacing:.7px}
-  html[data-tema="tecnico"] #hoverbar{border-radius:3px;border-color:var(--line2)}
-  html[data-tema="tecnico"] #btnSide{border-radius:3px}
-
-  /* ---------- seletor de tema, no cabeçalho ---------- */
-  #temas{display:flex;gap:4px;margin-top:9px}
-  #temas button{flex:1;margin:0;padding:5px 4px;font-size:10px;text-align:center;
-    text-transform:uppercase;letter-spacing:.5px;border-radius:6px;color:var(--dim2)}
-  #temas button.on{border-color:var(--acc);color:var(--txt);background:var(--panel3)}
 </style>
 </head>
 <body>
@@ -416,12 +280,6 @@
         <span class="chip" id="chipFonte">Registo do Infarmed</span>
         <a class="chip" href="explicador-regras.html">As regras explicadas</a>
         <a class="chip" href="nacional.html">Mapa nacional &rarr;</a>
-      </div>
-      <div id="temas">
-        <button type="button" data-t="">Atual</button>
-        <button type="button" data-t="claro">Claro</button>
-        <button type="button" data-t="editorial">Editorial</button>
-        <button type="button" data-t="tecnico">Técnico</button>
       </div>
     </div>
 
@@ -1133,7 +991,8 @@ async function enquadrarConcelhos(){
       caixa = caixa ? caixa.extend(pol.getBounds()) : pol.getBounds();
     }
     L.marker([c.c[0], c.c[1]], {interactive:false, icon:L.divIcon({className:'mkr-lbl',
-      html:'<span style="color:'+(origem?'#7dd3fc':'#c4b5fd')+'">'+esc(nome)+
+      // Tons escuros: os nomes assentam agora num mapa claro, com halo branco.
+      html:'<span style="color:'+(origem?'#0a6aa5':'#6d28d9')+'">'+esc(nome)+
            (origem?' (origem)':' (destino)')+'</span>', iconSize:[0,0]})}).addTo(gConc);
   });
   // maxZoom para nao colar o mapa a um concelho pequeno; o padding deixa respirar.
@@ -1260,15 +1119,10 @@ function aplicarBase(){
 }
 const refreshBase = debounce(aplicarBase, 150);
 
-function setStatus(t, err, accao){
-  const e=document.getElementById('status'); e.textContent=t; e.className = err?'err':'';
-  // Um erro que o utilizador pode resolver deve trazer o botao que o resolve.
-  if(accao){
-    const b=document.createElement('button');
-    b.type='button'; b.className='statusAct'; b.textContent=accao.label;
-    b.addEventListener('click', accao.fn);
-    e.appendChild(b);
-  }
+function setStatus(t, err){
+  const e = document.getElementById('status');
+  e.textContent = t;
+  e.className = err ? 'err' : '';
 }
 
 // Os limites de concelho e freguesia continuam a vir do Overpass, a pedido. Sao a
@@ -1421,7 +1275,8 @@ function renderVizinhos(){
             num(c.capEntrada)+' habitantes por farmácia, abaixo dos '+num(EX)+
             '. O artigo não o proíbe; a regra de abrir farmácia nova proibiria.'
         : 'Capitação cumprida nas duas pontas, antes e depois. Falta o local, que se testa no mapa.';
-      return '<tr class="alvo'+(c.n===sel?' sel':'')+'" data-c="'+esc(c.n)+'" title="'+razao+'">'+
+      return '<tr class="alvo'+(c.n===sel?' sel':'')+'" data-c="'+esc(c.n)+'" tabindex="0" '+
+        'role="button" aria-label="Escolher '+esc(c.n)+' como destino" title="'+razao+'">'+
         '<td>'+esc(c.n)+'</td>'+
         '<td class="cap">'+num(c.cap)+(c.capEntrada!=null?' &rarr; '+num(c.capEntrada):'')+'</td>'+
         '<td>'+num(c.f)+'</td>'+
@@ -1442,10 +1297,14 @@ function renderVizinhos(){
     'é quando serve hoje mas desce abaixo disso ao receber. Clique numa linha para a '+
     'escolher.</p>';
 
-  box.querySelectorAll('tr.alvo').forEach(tr=>tr.onclick=()=>{
+  const escolher = tr => {
     document.getElementById('cDest').value = tr.dataset.c;
     renderLim();
     enquadrarConcelhos();
+  };
+  box.querySelectorAll('tr.alvo').forEach(tr=>{
+    tr.onclick = ()=>escolher(tr);
+    tr.onkeydown = e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); escolher(tr); } };
   });
 }
 
@@ -1775,20 +1634,6 @@ carregarBaseNacional();
 
 // Recolher o painel da'-lhe o ecra' todo para o mapa. O Leaflet tem de ser avisado da
 // mudanca de tamanho, senao fica com metade dos mosaicos por desenhar.
-// Enquanto o André escolhe, os quatro aspetos convivem. Quando houver decisão,
-// fica um só e o seletor sai.
-function porTema(t){
-  if(t) document.documentElement.setAttribute('data-tema', t);
-  else document.documentElement.removeAttribute('data-tema');
-  document.querySelectorAll('#temas button').forEach(b=>
-    b.classList.toggle('on', (b.dataset.t||'') === (t||'')));
-  try{ localStorage.setItem('radar-tema', t||''); }catch(e){}
-}
-document.querySelectorAll('#temas button').forEach(b=>
-  b.addEventListener('click', ()=>porTema(b.dataset.t)));
-porTema(new URLSearchParams(location.search).get('tema')
-        || (()=>{ try{ return localStorage.getItem('radar-tema')||''; }catch(e){ return ''; } })());
-
 document.getElementById('btnSide').addEventListener('click', ()=>{
   const fechado = document.getElementById('app').classList.toggle('fechado');
   document.getElementById('btnSide').textContent = fechado ? 'Mostrar painel' : 'Esconder painel';
