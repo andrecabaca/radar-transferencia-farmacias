@@ -54,7 +54,7 @@
   .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 9px;
     border-radius:99px;border:1px solid var(--line2);background:var(--panel);color:var(--dim);
     text-decoration:none}
-  a.chip:hover{border-color:var(--coral);color:var(--acc)}
+  a.chip:hover{border-color:var(--coral);color:var(--acc-d)}
   .chip b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
 
   /* ---- cartoes ---- */
@@ -64,7 +64,7 @@
   .card > h2{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:16.5px;
     margin:0 0 12px;font-weight:500;color:var(--txt);letter-spacing:-.2px}
   .card > h2 .n{width:20px;height:20px;border-radius:6px;flex:none;display:grid;
-    place-items:center;background:var(--sel);color:var(--acc);font-size:11.5px;
+    place-items:center;background:var(--sel);color:var(--acc-d);font-size:11.5px;
     font-family:Inter,sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
   .card.ref{background:transparent;box-shadow:none;border-style:dashed}
 
@@ -84,7 +84,8 @@
   button.primary{background:var(--acc);border-color:var(--acc-d);color:#fff;
     font-weight:500;text-align:center}
   button.primary:hover{background:var(--acc-d);border-color:var(--acc-d)}
-  button.on{background:#e6f0e3;border-color:var(--ok);color:#2f6e3f}
+  button.on,button.primary.on,button.primary.on:hover{background:#e6f0e3;border-color:var(--ok);
+    color:#2f6e3f;font-weight:600}
   button:disabled{opacity:.38;cursor:not-allowed}
   .row{display:flex;gap:8px}
   .row>*{flex:1}
@@ -95,7 +96,7 @@
   .chk span small{display:block;color:var(--dim);font-size:12.5px;margin-top:3px;line-height:1.45}
   .rng{display:flex;align-items:center;gap:12px}
   .rng input[type=range]{flex:1;accent-color:var(--acc)}
-  .rng b{font-size:13px;min-width:54px;text-align:right;color:var(--acc);
+  .rng b{font-size:13px;min-width:54px;text-align:right;color:var(--acc-d);
     font-variant-numeric:tabular-nums}
   .note{font-size:12.5px;color:var(--dim);line-height:1.65;margin:9px 0 0}
   .note b,.check em,.check b,#concInfo,#base{font-variant-numeric:tabular-nums}
@@ -107,6 +108,7 @@
   .v-ok{background:#ecf3e8;border-color:#b9d6b4;color:#2f6e3f}
   .v-warn{background:#faf0dc;border-color:#e8c57e;color:#8a5a06}
   .v-bad{background:#fae8e4;border-color:#eeb0ad;color:#a33434}
+  .verdict .vd-act{width:auto;margin-top:10px;padding:7px 12px;font-size:12.5px;font-weight:600}
   .v-idle{background:var(--panel2);border-color:var(--line2);color:var(--dim);font-weight:400}
   .check{display:flex;gap:10px;align-items:flex-start;font-size:12px;padding:9px 0;
     border-bottom:1px solid var(--line);line-height:1.5}
@@ -189,7 +191,7 @@
   /* ---- blocos recolhiveis ---- */
   details{margin-top:9px;border-top:1px solid var(--line);padding-top:9px}
   .card.ref details:first-of-type{border-top:none;padding-top:0;margin-top:0}
-  summary{cursor:pointer;font-size:12.5px;color:var(--acc);padding:3px 0;user-select:none;
+  summary{cursor:pointer;font-size:12.5px;color:var(--acc-d);padding:3px 0;user-select:none;
     font-weight:550}
   summary:hover{color:var(--acc-d)}
   details .body{font-size:12.5px;color:var(--dim);line-height:1.7;padding:8px 0 2px}
@@ -248,6 +250,9 @@
   #hoverbar .hb-dot{width:11px;height:11px;border-radius:50%;background:#b3ab9f;flex:none;
     box-shadow:0 0 0 3px rgba(179,171,159,.3)}
   #hoverbar b{font-weight:700}
+  #hoverbar .hb-txt{flex:1}
+  #hbTest{display:none;width:auto;flex:none;margin:0;padding:8px 14px;min-height:40px}
+  #hoverbar.fixo #hbTest{display:block}
 
   /* ---- recolher o painel ---- */
   #btnSide{position:fixed;top:14px;right:14px;z-index:900;width:auto;
@@ -269,6 +274,15 @@
       margin:0;max-width:none;z-index:4}
     #btnSide{display:none}
     .wrap{padding:12px 12px 32px}
+  }
+  /* Dedos, não cursores: tudo o que se toca chega aos 44 px. */
+  @media (pointer:coarse){
+    button,select,input[type=text],input[type=number]{min-height:44px}
+    .seg button{min-height:44px}
+    .camadas label{min-height:44px;padding:0 14px}
+    .chk input{width:20px;height:20px}
+    .leaflet-touch .leaflet-control-zoom a{width:44px;height:44px;line-height:44px}
+    .cand .acts button{min-height:44px}
   }
   @media (max-width:420px){
     #map{height:52vh}
@@ -303,7 +317,8 @@
 
     <section class="card">
       <h2><span class="n">2</span>Farmácia a transferir</h2>
-      <button id="btnOrigin">Marcar no mapa a localização atual</button>
+      <select id="cMinha" aria-label="Escolher uma das minhas farmácias"><option value="">Escolher uma das minhas farmácias...</option></select>
+      <button id="btnOrigin">Ou marcar no mapa a localização atual</button>
       <div id="originInfo" class="note">Sem origem definida. A origem serve para testar o requisito de elegibilidade do artigo 26.º n.º 2 a) e o raio de 750 m.</div>
       <label class="chk"><input type="checkbox" id="chkExcecional"><span>Esteve em regime excecional de funcionamento nos últimos 3 anos<small>Artigo 57.º-A. Dispensa o requisito da alínea a) do n.º 2.</small></span></label>
     </section>
@@ -435,7 +450,7 @@
   </div>
   <div id="map"></div>
   <button id="btnSide" type="button">Esconder painel</button>
-  <div id="hoverbar"><span class="hb-dot"></span><span class="hb-txt">Passe o rato sobre o mapa para saber se pode transferir para ali.</span></div>
+  <div id="hoverbar" aria-live="polite"><span class="hb-dot"></span><span class="hb-txt">Passe o rato sobre o mapa para saber se pode transferir para ali.</span><button type="button" id="hbTest" class="primary">Testar aqui</button></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -443,6 +458,12 @@
 "use strict";
 
 /* ---------------- estado ---------------- */
+// As farmácias do André, com as coordenadas do registo do Infarmed (dados/pontos-nacionais.json).
+const MINHAS = [
+  {n:'Farmácia Acabado Janeiro', l:'Pias, Serpa', lat:38.02095, lng:-7.47759},
+  {n:'Farmácia Santa Lúcia',     l:'Beja',        lat:38.01574, lng:-7.87288},
+  {n:'Farmácia do Prata',        l:'Marvila, Lisboa', lat:38.74465, lng:-9.09897}
+];
 const S = {
   pharms: [],      // {id,lat,lng,name,manual}
   health: [],      // {id,lat,lng,name,legal,manual}
@@ -644,6 +665,8 @@ function evaluate(lat,lng){
   if(parts.includes('bad')) overall = (ex && ex.s==='warn' && hu.s!=='bad' && el.s!=='bad') ? 'warn' : 'bad';
   else if(parts.includes('warn')) overall = 'warn';
   else overall = 'ok';
+  // Sem origem marcada não se pode dizer "elegível": falta testar a alínea a).
+  if(overall==='ok' && el.s==='na') overall = 'pend';
 
   return {overall, ph, hu, el, ex, raio, dPh:nP.d, dHu:nH.d, nearPh:nP.item, nearHu:nH.item};
 }
@@ -737,7 +760,7 @@ function summarise(bounds){
 function renderSummary(bounds){
   const el = document.getElementById('resumo');
   if(map.getZoom() < ZOOM_MIN){
-    el.innerHTML = '<p class="note">Aproxime até ao nível '+ZOOM_MIN+' para o radar avaliar esta área. De mais longe, use o <a href="nacional.html" style="color:var(--acc)">mapa nacional</a>.</p>';
+    el.innerHTML = '<p class="note">Aproxime até ao nível '+ZOOM_MIN+' para o radar avaliar esta área. De mais longe, use o <a href="nacional.html" style="color:var(--acc-d)">mapa nacional</a>.</p>';
     return;
   }
   const r = summarise(bounds);
@@ -873,6 +896,8 @@ function drawOrigin(){
   preencherConcelho('cOrig', S.origin);
   gOrigin.clearLayers();
   const el = document.getElementById('originInfo');
+  const mi = MINHAS.findIndex(f=>S.origin && dist(f.lat,f.lng,S.origin.lat,S.origin.lng) < 5);
+  document.getElementById('cMinha').value = mi<0 ? '' : String(mi);
   if(!S.origin){
     el.textContent = 'Sem origem definida. A origem serve para testar o requisito de elegibilidade do artigo 26.º n.º 2 a) e o raio de 750 m.';
     return;
@@ -1189,13 +1214,19 @@ function renderTest(){
 
   preencherConcelho('cDest', S.test);
   L.circleMarker([S.test.lat,S.test.lng],{radius:9,color:'#fff',weight:3,
-    fillColor:e.overall==='ok'?'#22c55e':e.overall==='warn'?'#f59e0b':'#ef4444',fillOpacity:1}).addTo(gTest);
+    fillColor:e.overall==='ok'?'#22c55e':(e.overall==='warn'||e.overall==='pend')?'#f59e0b':'#ef4444',fillOpacity:1}).addTo(gTest);
   L.circle([S.test.lat,S.test.lng],{radius:D_PH,color:'#fff',weight:1,dashArray:'4 4',fill:false,opacity:.7,interactive:false}).addTo(gTest);
 
-  vd.className = 'verdict v-'+(e.overall==='ok'?'ok':e.overall==='warn'?'warn':'bad');
-  vd.textContent = e.overall==='ok' ? 'Local elegível nos requisitos de distância.'
-                 : e.overall==='warn' ? 'A verificar — está dentro da margem ou depende de exceção.'
-                 : 'Local não elegível.';
+  vd.className = 'verdict v-'+(e.overall==='ok'?'ok':(e.overall==='warn'||e.overall==='pend')?'warn':'bad');
+  if(e.overall==='pend'){
+    vd.innerHTML = 'Distâncias cumpridas, mas a origem está por testar. Sem saber de onde sai a farmácia não dá para dizer que o local é elegível.'
+      + '<br><button type="button" class="vd-act" id="vdOrigem">Marcar a farmácia a transferir</button>';
+    document.getElementById('vdOrigem').onclick = irParaOrigem;
+  } else {
+    vd.textContent = e.overall==='ok' ? 'Local elegível nos requisitos de distância.'
+                   : e.overall==='warn' ? 'A verificar — está dentro da margem ou depende de exceção.'
+                   : 'Local não elegível.';
+  }
 
   const rows = [
     ['Distância mínima de 500 m entre farmácias', e.ph],
@@ -1412,9 +1443,11 @@ function drawCands(){
   const box = document.getElementById('cands');
   if(!S.cands.length){ box.innerHTML='<p class="note">Nenhum candidato guardado.</p>'; document.getElementById('btnReport').disabled=true; return; }
   document.getElementById('btnReport').disabled=false;
+  S.cands.forEach(c=>{ try{ c.eval = evaluate(c.lat,c.lng); }catch(_){} });
   box.innerHTML = S.cands.map((c,i)=>{
-    const p = c.eval.overall==='ok'?'p-ok':c.eval.overall==='warn'?'p-warn':'p-bad';
-    const lbl = c.eval.overall==='ok'?'ELEGÍVEL':c.eval.overall==='warn'?'A VERIFICAR':'BLOQUEADO';
+    const o = c.eval.overall;
+    const p = o==='ok'?'p-ok':(o==='warn'||o==='pend')?'p-warn':'p-bad';
+    const lbl = o==='ok'?'ELEGÍVEL':o==='pend'?'ORIGEM POR TESTAR':o==='warn'?'A VERIFICAR':'BLOQUEADO';
     return '<div class="cand"><div class="t"><b>'+(i+1)+'. '+esc(c.name)+'</b><span class="pill '+p+'">'+lbl+'</span></div>'+
       '<em>Farmácia mais próxima a '+fmt(c.eval.dPh)+' · unidade de saúde a '+fmt(c.eval.dHu)+'</em>'+
       '<div class="acts"><button data-go="'+i+'">Ver</button><button data-del="'+i+'">Remover</button></div></div>';
@@ -1439,7 +1472,7 @@ function report(){
   // Elegiveis primeiro; dentro de cada grupo, os que tem mais folga face a' farmacia
   // mais proxima, que e' o unico criterio objetivo que sobra depois do legal.
   const ord = S.cands.map((c,i)=>({c,i})).sort((a,b)=>{
-    const r={ok:0,warn:1,bad:2};
+    const r={ok:0,pend:1,warn:1,bad:2};
     return (r[a.c.eval.overall]-r[b.c.eval.overall]) || ((b.c.eval.dPh||0)-(a.c.eval.dPh||0));
   });
   for(const {c,i} of ord){
@@ -1447,7 +1480,7 @@ function report(){
     t += '## '+(i+1)+'. '+c.name+'\n\n';
     t += '- Coordenadas: '+c.lat.toFixed(6)+', '+c.lng.toFixed(6)+'\n';
     t += '- Ligação: https://www.openstreetmap.org/?mlat='+c.lat.toFixed(6)+'&mlon='+c.lng.toFixed(6)+'#map=18/'+c.lat.toFixed(5)+'/'+c.lng.toFixed(5)+'\n';
-    t += '- Veredicto: '+(e.overall==='ok'?'ELEGÍVEL nos requisitos de distância':e.overall==='warn'?'A VERIFICAR':'BLOQUEADO')+'\n';
+    t += '- Veredicto: '+(e.overall==='ok'?'ELEGÍVEL nos requisitos de distância':e.overall==='pend'?'DISTÂNCIAS CUMPRIDAS, ORIGEM POR TESTAR':e.overall==='warn'?'A VERIFICAR':'BLOQUEADO')+'\n';
     t += '\n';
     t += '| Requisito | Estado | Nota |\n|---|---|---|\n';
     const st=x=>x==='ok'?'Cumpre':x==='warn'?'A verificar':x==='bad'?'Não cumpre':'N/A';
@@ -1513,15 +1546,26 @@ function fromHash(){
 function saveManual(){ persist(); }
 
 /* ---------------- interações ---------------- */
+const TOQUE = matchMedia('(hover:none)').matches;
+const ROT_ARMADO = (TOQUE ? 'Toque' : 'Clique')+' no mapa'+(TOQUE ? '' : ' · Esc cancela');
 function setMode(m){
   S.mode = S.mode===m ? null : m;
   const ids = {origin:'btnOrigin', test:'btnTest', addPh:'btnAddPh', addHu:'btnAddHu'};
-  for(const [k,id] of Object.entries(ids)) document.getElementById(id).classList.toggle('on', S.mode===k);
+  for(const [k,id] of Object.entries(ids)){
+    const b = document.getElementById(id);
+    if(!b.dataset.rot) b.dataset.rot = b.textContent;
+    b.classList.toggle('on', S.mode===k);
+    b.textContent = S.mode===k ? ROT_ARMADO : b.dataset.rot;
+  }
   document.getElementById('map').classList.toggle('crosshair', !!S.mode);
+  // No telemóvel o painel tapa o mapa: quem arma um modo tem de ver onde vai tocar.
+  if(S.mode && matchMedia('(max-width:820px)').matches) window.scrollTo({top:0});
 }
+document.addEventListener('keydown', ev=>{ if(ev.key==='Escape' && S.mode) setMode(S.mode); });
 
 map.on('click', ev=>{
   const {lat,lng} = ev.latlng;
+  if(S.mode) ev._usado = true;   // o toque já serviu para o modo armado
   if(S.mode==='origin'){ S.origin={lat,lng}; setMode(null); persist(); draw(); renderTest(); }
   else if(S.mode==='test'){ S.test={lat,lng}; setMode(null); renderTest(); }
   else if(S.mode==='addPh'){
@@ -1539,6 +1583,24 @@ map.on('click', ev=>{
 document.getElementById('cZona').onchange = e=>irParaConcelho(e.target.value);
 document.getElementById('btnBounds').onclick = loadBounds;
 document.getElementById('btnOrigin').onclick = ()=>setMode('origin');
+
+(()=>{
+  const sel = document.getElementById('cMinha');
+  MINHAS.forEach((f,i)=>sel.add(new Option(f.n+' — '+f.l, String(i))));
+  sel.onchange = ()=>{
+    const f = MINHAS[+sel.value];
+    if(!f) return;
+    S.origin = {lat:f.lat, lng:f.lng};
+    if(S.mode) setMode(S.mode);
+    map.setView([f.lat,f.lng], 16);
+    persist(); draw(); renderTest();
+  };
+})();
+function irParaOrigem(){
+  const sel = document.getElementById('cMinha');
+  sel.focus({preventScroll:true});
+  sel.closest('.card').scrollIntoView({block:'center'});
+}
 document.getElementById('btnTest').onclick   = ()=>setMode('test');
 document.getElementById('btnAddPh').onclick  = ()=>setMode('addPh');
 document.getElementById('btnAddHu').onclick  = ()=>setMode('addHu');
@@ -1592,7 +1654,7 @@ function renderLegend(){
 // Leitura instantânea: diz por palavras o que está debaixo do cursor.
 const hb = document.getElementById('hoverbar');
 const hbDot = hb.querySelector('.hb-dot'), hbTxt = hb.querySelector('.hb-txt');
-map.on('mousemove', ev=>{
+function lerPonto(ev){
   if(map.getZoom() < ZOOM_MIN){
     hbDot.style.background = '#475569';
     hbTxt.textContent = 'Aproxime até ao nível '+ZOOM_MIN+' para avaliar. A esta distância os 500 m não chegam a um punhado de pixels e o mapa mentiria. Para a vista de longe use o mapa nacional.';
@@ -1621,8 +1683,29 @@ map.on('mousemove', ev=>{
     hbDot.style.background = c.why==='saude' ? '#9333ea' : c.why==='raio' ? '#475569' : '#dc2626';
     hbTxt.innerHTML = '<b>Não pode transferir para aqui:</b> '+WHY_TXT[c.why]+' ('+fmt(c.d)+').';
   }
+}
+const HB_VAZIO = TOQUE ? 'Toque no mapa para saber se pode transferir para ali.'
+                       : 'Passe o rato sobre o mapa para saber se pode transferir para ali.';
+hbTxt.textContent = HB_VAZIO;
+if(!TOQUE){
+  map.on('mousemove', lerPonto);
+  map.on('mouseout', ()=>{ hbDot.style.background='#475569'; hbTxt.textContent=HB_VAZIO; });
+}
+// No toque não há "passar por cima": um toque fixa a leitura e oferece o teste ali mesmo.
+let hbPonto = null;
+map.on('click', ev=>{
+  if(!TOQUE || S.mode || ev._usado) return;
+  lerPonto(ev);
+  hbPonto = map.getZoom() >= ZOOM_MIN ? ev.latlng : null;
+  hb.classList.toggle('fixo', !!hbPonto);
 });
-map.on('mouseout', ()=>{ hbDot.style.background='#475569'; hbTxt.textContent='Passe o rato sobre o mapa para saber se pode transferir para ali.'; });
+document.getElementById('hbTest').onclick = ()=>{
+  if(!hbPonto) return;
+  S.test = {lat:hbPonto.lat, lng:hbPonto.lng};
+  hb.classList.remove('fixo');
+  renderTest();
+  document.getElementById('verdict').scrollIntoView({block:'center'});
+};
 document.getElementById('lyExcl').onchange = draw;
 
 map.on('moveend zoomend', ()=>{ persist(); refreshBase(); refreshConc(); refreshSummary(); });
