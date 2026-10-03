@@ -4,67 +4,80 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mapa Nacional — Transferência de Farmácias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
+  /* Tokens do DESIGN.md (base Claude, adaptado). Iguais aos do radar. */
   :root{
-    --bg:#0f172a; --bg2:#1e293b; --line:#334155; --txt:#e2e8f0; --dim:#94a3b8;
-    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --acc:#38bdf8; --sidebar:400px;
+    --bg:#f5f0e8; --bg2:#faf9f5; --bg3:#efe9de; --line:#e6dfd8; --line2:#d9d0c3;
+    --txt:#141413; --dim:#6c6a64;
+    --ok:#2f6e3f; --warn:#8a5a06; --bad:#b23b3b; --acc:#a9583e; --acc-d:#8a4530;
+    --coral:#cc785c; --sel:#f3dccf;
+    --serif:"Source Serif 4",Georgia,serif; --sidebar:400px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+  html,body{margin:0;height:100%;font:14px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--sel);color:var(--txt)}
+  :focus-visible{outline:2px solid var(--coral);outline-offset:2px}
   #app{display:flex;height:100%}
-  #side{width:var(--sidebar);min-width:var(--sidebar);height:100%;overflow-y:auto;background:var(--bg);border-right:1px solid var(--line)}
-  #map{flex:1;height:100%;background:#0b1220}
-  .hd{padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:600}
-  .hd h1{font-size:15px;margin:0;letter-spacing:.2px}
-  .hd p{margin:4px 0 0;font-size:11px;color:var(--dim);line-height:1.5}
+  #side{width:var(--sidebar);min-width:var(--sidebar);height:100%;overflow-y:auto;background:var(--bg);
+    border-right:1px solid var(--line2);scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+  #map{flex:1;height:100%;background:var(--bg3)}
+  .hd{padding:22px 18px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:600}
+  .hd h1{font-family:var(--serif);font-size:23px;line-height:1.15;margin:0;letter-spacing:-.4px;font-weight:500}
+  .hd p{margin:7px 0 0;font-size:12.5px;color:var(--dim);line-height:1.5}
   .hd a{color:var(--acc);text-decoration:none}
   .hd a:hover{text-decoration:underline}
-  section{border-bottom:1px solid var(--line);padding:14px 16px}
-  section>h2{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--dim);margin:0 0 10px;font-weight:600}
-  input[type=text]{width:100%;padding:8px 10px;background:var(--bg2);border:1px solid var(--line);border-radius:6px;color:var(--txt);font-size:13px;font-family:inherit}
-  input[type=text]:focus{outline:none;border-color:var(--acc)}
-  button{width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:6px;color:var(--txt);font-size:12.5px;cursor:pointer;font-family:inherit;margin-top:8px;text-align:left}
-  button:hover{background:#243349;border-color:#475569}
-  button.primary{background:#0369a1;border-color:#0284c7;color:#f0f9ff;font-weight:600;text-align:center}
-  button.primary:hover{background:#0284c7}
+  section{border-bottom:1px solid var(--line);padding:16px 18px}
+  section>h2{font-family:var(--serif);font-size:16.5px;letter-spacing:-.2px;color:var(--txt);margin:0 0 11px;font-weight:500}
+  input[type=text]{width:100%;padding:9px 11px;background:var(--bg2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit}
+  input[type=text]:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(204,120,92,.2)}
+  button{width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);font-size:12.5px;cursor:pointer;font-family:inherit;margin-top:8px;text-align:left}
+  button:hover{background:var(--bg3);border-color:#c2b6a6}
+  button.primary{background:var(--acc);border-color:var(--acc-d);color:#fff;font-weight:500;text-align:center}
+  button.primary:hover{background:var(--acc-d)}
   .metrics{display:flex;flex-direction:column;gap:6px}
-  .metrics label{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:7px;cursor:pointer;background:var(--bg2)}
-  .metrics label:has(input:checked){border-color:var(--acc);background:rgba(56,189,248,.10)}
+  .metrics label{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--bg2)}
+  .metrics label:hover{border-color:#c2b6a6}
+  .metrics label:has(input:checked){border-color:var(--acc);background:#f8ebe2}
   .metrics input{margin:2px 0 0;accent-color:var(--acc);flex:none}
   .metrics b{display:block;font-size:12.5px;font-weight:600}
-  .metrics small{display:block;font-size:11px;color:var(--dim);margin-top:2px;line-height:1.45}
+  .metrics small{display:block;font-size:12px;color:var(--dim);margin-top:2px;line-height:1.45}
   .totais{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  .tot{background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:11px 12px}
-  .tot b{display:block;font-size:21px;font-variant-numeric:tabular-nums;line-height:1.1}
-  .tot span{display:block;font-size:11px;color:var(--dim);margin-top:4px;line-height:1.35}
-  .note{font-size:11px;color:var(--dim);line-height:1.55;margin:10px 0 0}
+  .tot{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+  .tot b{display:block;font-family:var(--serif);font-weight:500;font-size:26px;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.05}
+  .tot span{display:block;font-size:12px;color:var(--dim);margin-top:5px;line-height:1.4}
+  .note{font-size:12px;color:var(--dim);line-height:1.6;margin:10px 0 0}
   .scale{display:flex;height:11px;border-radius:3px;overflow:hidden;margin:10px 0 5px}
   .scale i{flex:1}
-  .scaletxt{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .scaletxt{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
   .rank{display:flex;flex-direction:column;gap:1px}
-  .rk{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:5px;cursor:pointer;font-size:12.5px}
-  .rk:hover{background:var(--bg2)}
-  .rk .p{font-size:10.5px;color:var(--dim);width:17px;text-align:right;flex:none;font-variant-numeric:tabular-nums}
+  .rk{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:6px;cursor:pointer;font-size:12.5px}
+  .rk:hover{background:var(--bg3)}
+  .rk .p{font-size:11px;color:var(--dim);width:17px;text-align:right;flex:none;font-variant-numeric:tabular-nums}
   .rk .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rk .v{font-variant-numeric:tabular-nums;font-weight:600;flex:none;font-size:12px}
   .rk .sw{width:4px;height:19px;border-radius:2px;flex:none}
-  #det .big{font-size:17px;font-weight:600;margin:0 0 3px}
-  #det .sub{font-size:11.5px;color:var(--dim);margin:0 0 13px}
-  .kv{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12.5px;padding:7px 0;border-bottom:1px solid rgba(51,65,85,.55)}
+  #det .big{font-family:var(--serif);font-size:21px;font-weight:500;letter-spacing:-.3px;margin:0 0 3px}
+  #det .sub{font-size:12px;color:var(--dim);margin:0 0 13px}
+  .kv{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--line)}
   .kv:last-of-type{border-bottom:none}
   .kv span{color:var(--dim);flex:1}
   .kv b{font-variant-numeric:tabular-nums;flex:none}
-  .pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;margin:0 0 11px}
-  .p-ok{background:rgba(34,197,94,.18);color:#86efac}
-  .p-no{background:rgba(148,163,184,.16);color:#cbd5e1}
-  .p-warn{background:rgba(245,158,11,.18);color:#fcd34d}
-  .bar{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;margin:5px 0 12px}
+  .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:99px;margin:0 0 11px}
+  .p-ok{background:#dcebd6;color:var(--ok)}
+  .p-no{background:var(--bg3);color:var(--dim)}
+  .p-warn{background:#f6e9c8;color:var(--warn)}
+  .bar{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:5px 0 12px}
   .bar i{display:block;height:100%}
-  .leaflet-container{background:#0b1220}
-  .lgt{background:rgba(15,23,42,.94);color:#e2e8f0;border:1px solid #334155;border-radius:5px;padding:4px 8px;font-size:11.5px;font-weight:600;box-shadow:none}
+  .leaflet-container{background:var(--bg3);font-family:inherit}
+  .leaflet-control-zoom a{background:var(--bg2)!important;color:var(--txt)!important;border-color:var(--line2)!important}
+  .lgt{background:rgba(250,249,245,.97);color:var(--txt);border:1px solid var(--line2);border-radius:7px;padding:4px 9px;font-size:12px;font-weight:600;box-shadow:none}
   .lgt:before{display:none}
-  .cov{font-size:11px;line-height:1.5;padding:9px 11px;border-radius:6px;margin:12px 0 0;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);color:#fcd34d}
+  .cov{font-size:12px;line-height:1.5;padding:10px 12px;border-radius:8px;margin:12px 0 0;background:#faf0dc;border:1px solid #e8c57e;color:var(--warn)}
 </style>
 </head>
 <body>
@@ -120,7 +133,7 @@
 const map = L.map('map',{preferCanvas:true}).setView([39.6,-8.2], 7);
 // Basemap escuro sem chave de API. O CARTO passou a exigir chave e as telhas
 // vinham carimbadas com "API KEY REQUIRED" por cima do mapa.
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
   maxZoom:16, attribution:'&copy; Esri, &copy; OpenStreetMap'
 }).addTo(map);
 const gConc = L.layerGroup().addTo(map);
@@ -148,7 +161,7 @@ const METRICAS = {
     nome:'Pode abrir farmácia nova',
     desc:'Concelhos onde, mesmo depois de instalada mais uma farmácia, a capitação continua igual ou acima de 3500 habitantes.',
     val:c=>c.abrir?1:0, fmt:v=>v?'Sim':'Não', lo:0, hi:1, binaria:true,
-    ramp:['#334155','#334155','#166534','#16a34a','#22c55e']
+    ramp:['#d9d0c3','#d9d0c3','#166534','#16a34a','#22c55e']
   },
   sub500:{
     nome:'Saturação da rede',
@@ -175,7 +188,7 @@ function ramp(t, stops){
 }
 function corDe(c){
   const M = METRICAS[metrica], v = M.val(c);
-  if(v===null||v===undefined) return '#1e293b';
+  if(v===null||v===undefined) return '#d9d0c3';
   return ramp((v-M.lo)/(M.hi-M.lo), M.ramp);
 }
 
@@ -184,7 +197,7 @@ function pinta(){
   const M = METRICAS[metrica];
   layers.forEach((ly,nome)=>{
     const c = ly._c;
-    ly.setStyle({fillColor:corDe(c), fillOpacity:.72, color:'#0b1220', weight:.8});
+    ly.setStyle({fillColor:corDe(c), fillOpacity:.72, color:'#faf9f5', weight:.8});
   });
   if(sel) destaca(sel);
   document.getElementById('escala').innerHTML =
@@ -196,13 +209,13 @@ function pinta(){
 }
 function destaca(c){
   const ly = layers.get(c.n);
-  if(ly) ly.setStyle({color:'#38bdf8', weight:2.4}).bringToFront();
+  if(ly) ly.setStyle({color:'#141413', weight:2.4}).bringToFront();
 }
 
 function desenha(){
   CONC.forEach(c=>{
     const poly = L.polygon(c.g.map(r=>r.map(p=>[p[0],p[1]])), {
-      fillColor:corDe(c), fillOpacity:.72, color:'#0b1220', weight:.8
+      fillColor:corDe(c), fillOpacity:.72, color:'#faf9f5', weight:.8
     });
     poly._c = c;
     poly.bindTooltip(()=> {
@@ -210,8 +223,8 @@ function desenha(){
       return '<b>'+c.n+'</b><br>'+M.nome+': '+(v===null?'sem dados':M.fmt(v));
     },{className:'lgt',sticky:true});
     poly.on('click',()=>seleciona(c));
-    poly.on('mouseover',()=>{ if(sel!==c) poly.setStyle({weight:1.8,color:'#7dd3fc'}); });
-    poly.on('mouseout', ()=>{ if(sel!==c) poly.setStyle({weight:.8,color:'#0b1220'}); });
+    poly.on('mouseover',()=>{ if(sel!==c) poly.setStyle({weight:1.8,color:'#a9583e'}); });
+    poly.on('mouseout', ()=>{ if(sel!==c) poly.setStyle({weight:.8,color:'#faf9f5'}); });
     poly.addTo(gConc);
     layers.set(c.n, poly);
   });
@@ -219,7 +232,7 @@ function desenha(){
 
 /* ---------- seleção ---------- */
 function seleciona(c, voar){
-  if(sel){ const p=layers.get(sel.n); if(p) p.setStyle({weight:.8,color:'#0b1220'}); }
+  if(sel){ const p=layers.get(sel.n); if(p) p.setStyle({weight:.8,color:'#faf9f5'}); }
   sel = c; destaca(c);
   if(voar!==false){ const ly=layers.get(c.n); if(ly) map.fitBounds(ly.getBounds(),{padding:[40,40]}); }
 
@@ -345,9 +358,9 @@ Promise.all([
   const podeAbrir = CONC.filter(c=>c.abrir).length;
   document.getElementById('totais').innerHTML =
     '<div class="tot"><b>'+t.farmacias_ine.toLocaleString('pt-PT')+'</b><span>farmácias licenciadas no país</span></div>'+
-    '<div class="tot"><b style="color:#86efac">'+pctL+'%</b><span>podem mudar-se para qualquer sítio do seu concelho</span></div>'+
-    '<div class="tot"><b style="color:#fca5a5">'+pctS+'%</b><span>já estão a menos de 500 m de outra farmácia</span></div>'+
-    '<div class="tot"><b style="color:#7dd3fc">'+podeAbrir+'</b><span>concelhos com margem para uma farmácia nova</span></div>';
+    '<div class="tot"><b style="color:var(--ok)">'+pctL+'%</b><span>podem mudar-se para qualquer sítio do seu concelho</span></div>'+
+    '<div class="tot"><b style="color:var(--bad)">'+pctS+'%</b><span>já estão a menos de 500 m de outra farmácia</span></div>'+
+    '<div class="tot"><b style="color:var(--acc)">'+podeAbrir+'</b><span>concelhos com margem para uma farmácia nova</span></div>';
   document.getElementById('totnota').innerHTML =
     'As percentagens são calculadas sobre as '+t.farmacias.toLocaleString('pt-PT')+
     ' farmácias que estão localizadas no OpenStreetMap, ou seja '+
@@ -358,7 +371,7 @@ Promise.all([
   if(h){ const c = CONC.find(x=>x.n===h); if(c) seleciona(c); }
 }).catch(e=>{
   document.getElementById('totais').innerHTML =
-    '<p class="note" style="color:#fca5a5">Não foi possível carregar os dados nacionais ('+e.message+
+    '<p class="note" style="color:var(--bad)">Não foi possível carregar os dados nacionais ('+e.message+
     '). Abra a aplicação através do ficheiro <b>Abrir Radar.bat</b>, não com duplo clique no HTML.</p>';
 });
 </script>

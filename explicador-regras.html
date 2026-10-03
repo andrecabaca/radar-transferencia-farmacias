@@ -2,70 +2,71 @@
 <title>Onde a Farmácia Não Pode Ir</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&display=swap">
 
 <style>
 :root{
-  --paper:#EEF1F4;
+  --paper:#FAF9F5;
   --card:#FFFFFF;
-  --ink:#0F1720;
-  --muted:#5B6875;
-  --hair:#D3DAE1;
-  --accent:#1B4965;
-  --accent-soft:#E2EAF0;
-  --blocked:#C0342C;
+  --ink:#141413;
+  --muted:#6C6A64;
+  --hair:#E6DFD8;
+  --accent:#A9583E;
+  --accent-soft:#F3DCCF;
+  --blocked:#B23B3B;
   --health:#7B3FA0;
-  --radius:#546678;
-  --free:#1B7F4C;
-  --margin:#B87407;
-  --shadow:0 1px 2px rgba(15,23,32,.06), 0 8px 24px -12px rgba(15,23,32,.18);
+  --radius:#6C6A64;
+  --free:#2F6E3F;
+  --margin:#8A5A06;
+  --shadow:none;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --paper:#0D1319;
-    --card:#141C24;
-    --ink:#E6EDF3;
-    --muted:#93A1AE;
-    --hair:#26323D;
-    --accent:#7FB5D5;
-    --accent-soft:#17242E;
-    --blocked:#E8635A;
+    --paper:#181715;
+    --card:#1F1E1B;
+    --ink:#FAF9F5;
+    --muted:#A09D96;
+    --hair:#33302B;
+    --accent:#CC785C;
+    --accent-soft:#3A2A22;
+    --blocked:#E06A5E;
     --health:#B98AD8;
-    --radius:#8496A8;
-    --free:#4FBE85;
-    --margin:#E0A03C;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px -14px rgba(0,0,0,.7);
+    --radius:#A09D96;
+    --free:#5DB872;
+    --margin:#E8A55A;
+    --shadow:none;
   }
 }
 :root[data-theme="dark"]{
-  --paper:#0D1319;
-  --card:#141C24;
-  --ink:#E6EDF3;
-  --muted:#93A1AE;
-  --hair:#26323D;
-  --accent:#7FB5D5;
-  --accent-soft:#17242E;
-  --blocked:#E8635A;
+  --paper:#181715;
+  --card:#1F1E1B;
+  --ink:#FAF9F5;
+  --muted:#A09D96;
+  --hair:#33302B;
+  --accent:#CC785C;
+  --accent-soft:#3A2A22;
+  --blocked:#E06A5E;
   --health:#B98AD8;
-  --radius:#8496A8;
-  --free:#4FBE85;
-  --margin:#E0A03C;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px -14px rgba(0,0,0,.7);
+  --radius:#A09D96;
+  --free:#5DB872;
+  --margin:#E8A55A;
+  --shadow:none;
 }
 
 *{box-sizing:border-box}
 body{
   margin:0; background:var(--paper); color:var(--ink);
-  font-family:Newsreader,Georgia,"Times New Roman",serif;
-  font-size:18px; line-height:1.62;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:17px; line-height:1.62;
   -webkit-font-smoothing:antialiased;
 }
 .wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
 .col{max-width:64ch}
 
-h1,h2,h3,.lbl{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
-h1{font-size:clamp(2.1rem,5.4vw,3.5rem);line-height:1.04;font-weight:700;letter-spacing:-.022em;margin:0;text-wrap:balance}
-h2{font-size:clamp(1.35rem,2.7vw,1.75rem);font-weight:600;letter-spacing:-.014em;line-height:1.2;margin:0 0 14px;text-wrap:balance}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif}
+.lbl{font-family:Inter,sans-serif}
+h1{font-size:clamp(2.1rem,5.4vw,3.5rem);line-height:1.04;font-weight:500;letter-spacing:-.025em;margin:0;text-wrap:balance}
+h2{font-size:clamp(1.4rem,2.8vw,1.85rem);font-weight:500;letter-spacing:-.014em;line-height:1.2;margin:0 0 14px;text-wrap:balance}
 h3{font-size:1.02rem;font-weight:600;letter-spacing:-.005em;margin:0 0 6px}
 p{margin:0 0 18px}
 strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 66%, var(--accent-soft) 66%)}
@@ -85,7 +86,7 @@ header .lbl{display:block;margin-bottom:20px}
   background:var(--card);border:1px solid var(--hair);border-left:4px solid var(--blocked);
   box-shadow:var(--shadow);
 }
-.stat .big{font-family:Archivo,sans-serif;font-size:clamp(3rem,9vw,4.6rem);font-weight:700;line-height:.9;letter-spacing:-.035em;color:var(--blocked);font-variant-numeric:tabular-nums}
+.stat .big{font-family:"Source Serif 4",Georgia,serif;font-size:clamp(3rem,9vw,4.6rem);font-weight:500;line-height:.9;letter-spacing:-.035em;color:var(--blocked);font-variant-numeric:tabular-nums}
 .stat .txt{flex:1 1 260px;font-size:1.02rem;line-height:1.45;color:var(--muted)}
 .stat .txt b{color:var(--ink);font-weight:500}
 
